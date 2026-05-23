@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin Dashboard</title>
+<title>Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -21,8 +21,6 @@ padding:20px;
 position:fixed;
 }
 
-.sidebar h2{color:#38bdf8;}
-
 .sidebar button{
 width:100%;
 padding:10px;
@@ -34,43 +32,29 @@ border-radius:8px;
 cursor:pointer;
 }
 
-.sidebar button:hover{
-background:#38bdf8;
-color:black;
-}
-
 .main{
 margin-left:260px;
 padding:20px;
 width:100%;
 }
 
-.cards{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:15px;
-}
+.section{display:none;}
+.active{display:block;}
 
 .card{
 background:#1e293b;
 padding:15px;
-border-radius:12px;
+margin:10px;
+border-radius:10px;
 }
-
-.section{display:none;}
-.active{display:block;}
 </style>
 </head>
 
 <body>
 
 <div class="sidebar">
-<h2>⚡ Admin Panel</h2>
-
-<button onclick="show('home')">Dashboard</button>
-<button onclick="show('users')">Users</button>
-<button onclick="show('withdraw')">Withdraw</button>
-<button onclick="show('campaigns')">Campaigns</button>
+<h2>⚡ Dashboard</h2>
+<button onclick="show('home')">Home</button>
 <button onclick="logout()">Logout</button>
 </div>
 
@@ -78,30 +62,14 @@ border-radius:12px;
 
 <div id="home" class="section active">
 
-<div class="cards">
-<div class="card"><h3>Total Users</h3><p id="usersCount">0</p></div>
-<div class="card"><h3>Withdraw</h3><p id="withdrawCount">0</p></div>
-<div class="card"><h3>Pending</h3><p id="pendingCount">0</p></div>
-<div class="card"><h3>Payout</h3><p id="payoutCount">0</p></div>
+<h2>Your Dashboard</h2>
+
+<div class="card">
+Balance: ₹<span id="balance">0</span>
 </div>
 
 <canvas id="chart"></canvas>
 
-</div>
-
-<div id="users" class="section">
-<h2>Users</h2>
-<div id="userList"></div>
-</div>
-
-<div id="withdraw" class="section">
-<h2>Withdraw</h2>
-<div id="withdrawList"></div>
-</div>
-
-<div id="campaigns" class="section">
-<h2>Campaigns</h2>
-<div id="campaignList"></div>
 </div>
 
 </div>
@@ -110,72 +78,49 @@ border-radius:12px;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import {
-getFirestore,
-collection,
-getDocs,
-doc,
-getDoc
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-
-import {
 getAuth,
 onAuthStateChanged,
 signOut
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
-/* FIREBASE CONFIG */
+import {
+getFirestore,
+doc,
+getDoc
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
 const firebaseConfig = {
 apiKey: "AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEkTgc0E",
 authDomain: "effortless-earn-7f39e.firebaseapp.com",
 projectId: "effortless-earn-7f39e",
-storageBucket: "effortless-earn-7f39e.firebaseapp.com",
+storageBucket: "effortless-earn-7f39e.appspot.com",
 messagingSenderId: "554178513766",
 appId: "1:554178513766:web:d8d7edf915a95349cb16a7"
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-/* SAFE AUTH */
 let ready = false;
 
-onAuthStateChanged(auth, async (user) => {
+/* AUTH FIX */
+onAuthStateChanged(auth, async (user)=>{
 
-if (ready) return;
-
-if (!user) {
-window.location.replace("login.html");
+if(!user){
+window.location.href="login.html";
 return;
 }
 
-try {
+const snap = await getDoc(doc(db,"wallets",user.uid));
 
-const snap = await getDoc(doc(db,"users",user.uid));
-
-if (!snap.exists() || snap.data().role !== "admin") {
-window.location.replace("login.html");
-return;
+if(snap.exists()){
+document.getElementById("balance").innerText = snap.data().balance;
 }
 
 ready = true;
-init();
-
-} catch (err) {
-console.log(err);
-window.location.replace("login.html");
-}
 
 });
-
-/* INIT */
-function init(){
-show("home");
-loadStats();
-loadUsers();
-loadWithdraw();
-loadCampaigns();
-}
 
 /* NAV */
 window.show = function(id){
@@ -186,71 +131,8 @@ document.getElementById(id).classList.add("active");
 /* LOGOUT */
 window.logout = function(){
 signOut(auth);
-window.location.replace("login.html");
+window.location.href="login.html";
 };
-
-/* STATS */
-async function loadStats(){
-
-const users = await getDocs(collection(db,"wallets"));
-const withdraw = await getDocs(collection(db,"withdrawals"));
-
-let pending=0;
-let payout=0;
-
-withdraw.forEach(d=>{
-let x=d.data();
-if(x.status==="pending") pending++;
-if(x.status==="approved") payout+=Number(x.amount);
-});
-
-document.getElementById("usersCount").innerText = users.size;
-document.getElementById("withdrawCount").innerText = withdraw.size;
-document.getElementById("pendingCount").innerText = pending;
-document.getElementById("payoutCount").innerText = payout;
-
-new Chart(document.getElementById("chart"),{
-type:"bar",
-data:{
-labels:["Users","Withdraw","Pending","Payout"],
-datasets:[{
-data:[users.size,withdraw.size,pending,payout]
-}]
-}
-});
-
-}
-
-/* USERS */
-async function loadUsers(){
-const snap = await getDocs(collection(db,"wallets"));
-let html="";
-snap.forEach(d=>{
-html+=`<div class="card">${d.id} - ₹${d.data().balance}</div>`;
-});
-document.getElementById("userList").innerHTML=html;
-}
-
-/* WITHDRAW */
-async function loadWithdraw(){
-const snap = await getDocs(collection(db,"withdrawals"));
-let html="";
-snap.forEach(d=>{
-let x=d.data();
-html+=`<div class="card">${x.userId} - ₹${x.amount} (${x.status})</div>`;
-});
-document.getElementById("withdrawList").innerHTML=html;
-}
-
-/* CAMPAIGNS */
-async function loadCampaigns(){
-const snap = await getDocs(collection(db,"campaigns"));
-let html="";
-snap.forEach(d=>{
-html+=`<div class="card">${d.data().title}</div>`;
-});
-document.getElementById("campaignList").innerHTML=html;
-}
 
 </script>
 
