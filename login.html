@@ -31,12 +31,16 @@ setDoc,
 getDoc
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-const app = initializeApp({
-apiKey:"AIzaSyD...",
-authDomain:"effortless-earn-7f39e.firebaseapp.com",
-projectId:"effortless-earn-7f39e"
-});
+const firebaseConfig = {
+apiKey: "YOUR_API_KEY_HERE",
+authDomain: "effortless-earn-7f39e.firebaseapp.com",
+projectId: "effortless-earn-7f39e",
+storageBucket: "effortless-earn-7f39e.appspot.com",
+messagingSenderId: "554178513766",
+appId: "1:554178513766:web:d8d7edf915a95349cb16a7"
+};
 
+const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -77,7 +81,7 @@ const userCred = await signInWithEmailAndPassword(auth,email,password);
 const snap = await getDoc(doc(db,"users",userCred.user.uid));
 
 if(!snap.exists()){
-document.getElementById("msg").innerText="No user data";
+document.getElementById("msg").innerText="User not found";
 return;
 }
 
