@@ -156,14 +156,27 @@ signOut
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
 /* 🔥 FIREBASE CONFIG */
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+  
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-apiKey: "YOUR_API_KEY",
-authDomain: "YOUR_AUTH_DOMAIN",
-projectId: "YOUR_PROJECT_ID",
-storageBucket: "YOUR_STORAGE_BUCKET",
-messagingSenderId: "YOUR_SENDER_ID",
-appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEkTgc0E",
+  authDomain: "effortless-earn-7f39e.firebaseapp.com",
+  projectId: "effortless-earn-7f39e",
+  storageBucket: "effortless-earn-7f39e.firebasestorage.app",
+  messagingSenderId: "554178513766",
+  appId: "1:554178513766:web:d8d7edf915a95349cb16a7",
+  measurementId: "G-FLV8NJM726"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
