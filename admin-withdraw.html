@@ -40,7 +40,7 @@ color:white;
 
 <body>
 
-<h1>Withdraw Requests (Admin)</h1>
+<h1>Withdraw Requests (Admin Panel)</h1>
 
 <div id="list">Loading...</div>
 
@@ -52,7 +52,9 @@ getFirestore,
 collection,
 getDocs,
 doc,
-updateDoc
+updateDoc,
+getDoc,
+increment
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -105,10 +107,67 @@ async function loadWithdrawals() {
 }
 
 //
-// ✅ APPROVE
+// ✅ APPROVE (wallet deduct + status update)
 //
 window.approve = async function(id) {
 
   const ref = doc(db, "withdrawals", id);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    alert("Request not found");
+    return;
+  }
+
+  const data = snap.data();
+
+  const walletRef = doc(db, "wallets", data.userId);
+  const walletSnap = await getDoc(walletRef);
+
+  if (!walletSnap.exists()) {
+    alert("Wallet not found");
+    return;
+  }
+
+  const currentBalance = walletSnap.data().balance || 0;
+
+  if (currentBalance < data.amount) {
+    alert("Insufficient wallet balance");
+    return;
+  }
+
+  // mark approved
+  await updateDoc(ref, {
+    status: "approved"
+  });
+
+  // deduct wallet
+  await updateDoc(walletRef, {
+    balance: increment(-data.amount)
+  });
+
+  alert("Approved + Payment processed (manual assumed)");
+  loadWithdrawals();
+};
+
+//
+// ❌ REJECT
+//
+window.reject = async function(id) {
+
+  const ref = doc(db, "withdrawals", id);
 
   await updateDoc(ref, {
+    status: "rejected"
+  });
+
+  alert("Rejected");
+  loadWithdrawals();
+};
+
+loadWithdrawals();
+
+</script>
+
+</body>
+</html>
