@@ -33,7 +33,7 @@ padding:10px;
 
 <div class="card">
 <h2>Available Campaigns</h2>
-<div id="campaignList"></div>
+<div id="campaignList">Loading campaigns...</div>
 </div>
 
 <button onclick="logout()">Logout</button>
@@ -57,35 +57,45 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 async function loadCampaigns() {
-  const querySnapshot = await getDocs(collection(db, "campaigns"));
+  try {
+    const querySnapshot = await getDocs(collection(db, "campaigns"));
 
-  let html = "";
+    let html = "";
 
-  querySnapshot.forEach((doc) => {
-    const data = doc.data();
+    if (querySnapshot.empty) {
+      html = "<p>No campaigns found</p>";
+    } else {
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
 
-    html += `
-      <div style="border:1px solid #ccc;padding:10px;margin:10px 0;">
-        <h3>${data.title}</h3>
-        <p>Reward: ₹${data.reward}</p>
-        <button>Participate</button>
-      </div>
-    `;
-  });
+        html += `
+          <div style="border:1px solid #ccc;padding:10px;margin:10px 0;">
+            <h3>${data.title}</h3>
+            <p>Reward: ₹${data.reward}</p>
+            <button>Participate</button>
+          </div>
+        `;
+      });
+    }
 
-  document.getElementById("campaignList").innerHTML = html;
+    document.getElementById("campaignList").innerHTML = html;
+
+  } catch (error) {
+    alert("ERROR: " + error.message);
+    console.error(error);
+  }
 }
 
-loadCampaigns().catch((error) => {
-  alert("ERROR: " + error.message);
-  console.error(error);
-});
+loadCampaigns();
 
 window.logout = function() {
-signOut(auth)
-.then(()=>{
-window.location.href="signin.html";
-});
+  signOut(auth)
+  .then(() => {
+    window.location.href = "signin.html";
+  })
+  .catch((error) => {
+    alert(error.message);
+  });
 }
 </script>
 
