@@ -141,7 +141,36 @@ const auth = getAuth(app);
 let isReady = false;
 
 /* AUTH CHECK (NO LOOP FIX) */
-onAuthStateChanged(auth, async (user)=>{
+let ready = false;
+
+onAuthStateChanged(auth, async (user) => {
+
+if (ready) return;
+
+if (!user) {
+window.location.replace("login.html");
+return;
+}
+
+try {
+
+const snap = await getDoc(doc(db, "users", user.uid));
+
+if (!snap.exists() || snap.data().role !== "admin") {
+window.location.replace("login.html");
+return;
+}
+
+ready = true;
+
+/* 👉 AB DASHBOARD START HOGA */
+init();
+
+} catch (err) {
+console.log(err);
+}
+
+});
 
 if(isReady) return;
 
