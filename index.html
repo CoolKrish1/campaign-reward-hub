@@ -1,20 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Login System</title>
+<title>Auth System</title>
+
+<style>
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.box{
+background:#1e293b;
+padding:25px;
+border-radius:12px;
+width:300px;
+text-align:center;
+}
+
+input{
+width:100%;
+padding:10px;
+margin:8px 0;
+border:none;
+border-radius:6px;
+}
+
+button{
+width:100%;
+padding:10px;
+margin-top:8px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.loginBtn{background:#38bdf8;}
+.registerBtn{background:#22c55e;}
+
+.toggle{
+margin-top:10px;
+cursor:pointer;
+color:#38bdf8;
+}
+</style>
 </head>
 
 <body>
 
+<div class="box">
+
 <h2 id="title">Login</h2>
 
-<input id="email" placeholder="Email"><br><br>
-<input id="password" type="password" placeholder="Password"><br><br>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
 
-<button onclick="login()">Login</button>
-<button onclick="register()">Register</button>
+<button class="loginBtn" onclick="login()">Login</button>
+<button class="registerBtn" onclick="register()" style="display:none;">Create Account</button>
+
+<p class="toggle" onclick="toggle()">Switch to Register</p>
 
 <p id="msg"></p>
+
+</div>
 
 <script type="module">
 
@@ -41,24 +93,44 @@ projectId:"YOUR_PROJECT_ID"
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+let mode = "login";
+
+/* TOGGLE UI */
+window.toggle = function(){
+
+if(mode === "login"){
+mode = "register";
+document.getElementById("title").innerText="Register";
+document.querySelector(".loginBtn").style.display="none";
+document.querySelector(".registerBtn").style.display="block";
+document.querySelector(".toggle").innerText="Switch to Login";
+}
+else{
+mode = "login";
+document.getElementById("title").innerText="Login";
+document.querySelector(".loginBtn").style.display="block";
+document.querySelector(".registerBtn").style.display="none";
+document.querySelector(".toggle").innerText="Switch to Register";
+}
+
+};
+
 /* REGISTER */
 window.register = async function(){
 
-const email = email = document.getElementById("email").value;
+const email = document.getElementById("email").value;
 const password = document.getElementById("password").value;
 
 try{
 
 const userCred = await createUserWithEmailAndPassword(auth,email,password);
-const user = userCred.user;
 
-/* save role */
-await setDoc(doc(db,"users",user.uid),{
-email: email,
-role: "user"
+await setDoc(doc(db,"users",userCred.user.uid),{
+email:email,
+role:"user"
 });
 
-document.getElementById("msg").innerText="Registered ✔";
+document.getElementById("msg").innerText="Account Created ✔";
 
 }catch(err){
 document.getElementById("msg").innerText=err.message;
@@ -75,12 +147,11 @@ const password = document.getElementById("password").value;
 try{
 
 const userCred = await signInWithEmailAndPassword(auth,email,password);
-const user = userCred.user;
 
-const snap = await getDoc(doc(db,"users",user.uid));
+const snap = await getDoc(doc(db,"users",userCred.user.uid));
 
 if(!snap.exists()){
-document.getElementById("msg").innerText="No user data";
+document.getElementById("msg").innerText="User not found";
 return;
 }
 
