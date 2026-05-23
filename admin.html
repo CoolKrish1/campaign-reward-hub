@@ -1,139 +1,144 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>FULL ADMIN DASHBOARD</title>
+<title>Pro Admin Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
 display:flex;
-height:100vh;
+background:#0f172a;
+color:white;
 }
 
 /* SIDEBAR */
 .sidebar{
-width:240px;
-background:#111;
-color:white;
+width:250px;
+background:#111827;
 padding:20px;
+height:100vh;
 }
 
 .sidebar h2{
-margin-bottom:20px;
+color:#38bdf8;
 }
 
 .sidebar button{
 width:100%;
-padding:10px;
-margin-bottom:10px;
+padding:12px;
+margin-top:10px;
 border:none;
 cursor:pointer;
-background:#333;
+border-radius:8px;
+background:#1f2937;
 color:white;
-border-radius:5px;
+transition:0.3s;
 }
 
 .sidebar button:hover{
-background:#555;
+background:#38bdf8;
+color:black;
 }
 
-/* CONTENT */
-.content{
+/* MAIN */
+.main{
 flex:1;
-background:#f5f5f5;
 padding:20px;
 overflow:auto;
 }
 
-.page{
-display:none;
+/* CARDS */
+.grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:15px;
 }
 
-.active{
-display:block;
-}
-
-/* CARD */
 .card{
-background:white;
+background:#1e293b;
 padding:15px;
-margin:10px 0;
-border-radius:10px;
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
+border-radius:12px;
 }
 
-/* BUTTONS */
-.approve{
-background:green;
-color:white;
-padding:8px;
-border:none;
-cursor:pointer;
-margin-right:5px;
+.card h3{
+margin:0;
+color:#38bdf8;
 }
 
-.reject{
-background:red;
-color:white;
-padding:8px;
-border:none;
-cursor:pointer;
+/* SECTION */
+.section{
+margin-top:20px;
+background:#1e293b;
+padding:15px;
+border-radius:12px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
-<h2>🔥 Admin Panel</h2>
+<h2>⚡ Admin Panel</h2>
 
 <button onclick="show('dashboard')">📊 Dashboard</button>
 <button onclick="show('withdraw')">💰 Withdraw</button>
 <button onclick="show('users')">👤 Users</button>
-<button onclick="show('wallets')">💳 Wallets</button>
 <button onclick="show('campaigns')">📦 Campaigns</button>
-
 </div>
 
-<!-- CONTENT -->
-<div class="content">
+<div class="main">
 
 <!-- DASHBOARD -->
-<div id="dashboard" class="page active">
-<h2>📊 Dashboard</h2>
+<div id="dashboard">
+
+<div class="grid">
+<div class="card">
+<h3>Total Users</h3>
+<p id="usersCount">0</p>
+</div>
 
 <div class="card">
-<p>Total Users: <span id="totalUsers">0</span></p>
-<p>Total Withdrawals: <span id="totalWithdraw">0</span></p>
-<p>Total Payout: ₹<span id="totalPayout">0</span></p>
-<p>Pending Requests: <span id="pending">0</span></p>
+<h3>Total Withdraw</h3>
+<p id="withdrawCount">0</p>
 </div>
+
+<div class="card">
+<h3>Pending</h3>
+<p id="pendingCount">0</p>
+</div>
+
+<div class="card">
+<h3>Total Payout</h3>
+<p id="payoutCount">0</p>
+</div>
+</div>
+
+<div class="section">
+<h3>📈 Analytics</h3>
+<canvas id="chart"></canvas>
+</div>
+
 </div>
 
 <!-- WITHDRAW -->
-<div id="withdraw" class="page">
-<h2>💰 Withdraw Requests</h2>
-<div id="withdrawList">Loading...</div>
+<div id="withdraw" style="display:none;">
+<h2>Withdraw Requests</h2>
+<div id="withdrawList"></div>
 </div>
 
 <!-- USERS -->
-<div id="users" class="page">
-<h2>👤 Users</h2>
-<div id="userList">Loading...</div>
-</div>
-
-<!-- WALLETS -->
-<div id="wallets" class="page">
-<h2>💳 Wallets</h2>
-<div id="walletList">Loading...</div>
+<div id="users" style="display:none;">
+<h2>Users</h2>
+<div id="userList"></div>
 </div>
 
 <!-- CAMPAIGNS -->
-<div id="campaigns" class="page">
-<h2>📦 Campaigns</h2>
-<div id="campaignList">Loading...</div>
+<div id="campaigns" style="display:none;">
+<h2>Campaigns</h2>
+<div id="campaignList"></div>
 </div>
 
 </div>
@@ -152,27 +157,25 @@ increment
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
- apiKey: "AIzaSyD...",
- authDomain: "effortless-earn-7f39e.firebaseapp.com",
- projectId: "effortless-earn-7f39e",
- storageBucket: "effortless-earn-7f39e.firebasestorage.app",
- messagingSenderId: "554178513766",
- appId: "1:554178513766:web:d8d7edf915a95349cb16a7"
+apiKey: "AIzaSyD...",
+authDomain: "effortless-earn-7f39e.firebaseapp.com",
+projectId: "effortless-earn-7f39e",
+storageBucket: "effortless-earn-7f39e.firebasestorage.app",
+messagingSenderId: "554178513766",
+appId: "1:554178513766:web:d8d7edf915a95349cb16a7"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 //
-// PAGE SWITCH
+// NAVIGATION
 //
 window.show = function(page){
-
-  document.querySelectorAll('.page').forEach(p=>{
-    p.classList.remove('active');
-  });
-
-  document.getElementById(page).classList.add('active');
+document.querySelectorAll(".main > div").forEach(d=>{
+d.style.display="none";
+});
+document.getElementById(page).style.display="block";
 };
 
 //
@@ -180,28 +183,43 @@ window.show = function(page){
 //
 async function loadStats(){
 
-  const users = await getDocs(collection(db,"wallets"));
-  const withdraw = await getDocs(collection(db,"withdrawals"));
+const users = await getDocs(collection(db,"wallets"));
+const withdraw = await getDocs(collection(db,"withdrawals"));
 
-  let payout = 0;
-  let pending = 0;
+let pending=0;
+let payout=0;
 
-  withdraw.forEach(d=>{
-    const data = d.data();
+withdraw.forEach(d=>{
+const data=d.data();
 
-    if(data.status==="approved"){
-      payout += Number(data.amount);
-    }
+if(data.status==="pending") pending++;
+if(data.status==="approved") payout += Number(data.amount);
+});
 
-    if(data.status==="pending"){
-      pending++;
-    }
-  });
+document.getElementById("usersCount").innerText = users.size;
+document.getElementById("withdrawCount").innerText = withdraw.size;
+document.getElementById("pendingCount").innerText = pending;
+document.getElementById("payoutCount").innerText = payout;
 
-  document.getElementById("totalUsers").innerText = users.size;
-  document.getElementById("totalWithdraw").innerText = withdraw.size;
-  document.getElementById("totalPayout").innerText = payout;
-  document.getElementById("pending").innerText = pending;
+loadChart(pending,payout);
+}
+
+//
+// CHART
+//
+function loadChart(pending,payout){
+
+new Chart(document.getElementById("chart"),{
+type:"bar",
+data:{
+labels:["Pending","Payout"],
+datasets:[{
+label:"Stats",
+data:[pending,payout],
+backgroundColor:["orange","green"]
+}]
+}
+});
 }
 
 //
@@ -209,30 +227,29 @@ async function loadStats(){
 //
 async function loadWithdraw(){
 
-  const snap = await getDocs(collection(db,"withdrawals"));
+const snap = await getDocs(collection(db,"withdrawals"));
 
-  let html="";
+let html="";
 
-  snap.forEach(d=>{
+snap.forEach(d=>{
 
-    const data = d.data();
+const data=d.data();
 
-    html += `
-      <div class="card">
-        <p><b>User:</b> ${data.userId}</p>
-        <p><b>Amount:</b> ₹${data.amount}</p>
-        <p><b>UPI:</b> ${data.upi}</p>
-        <p><b>Status:</b> ${data.status}</p>
+html+=`
+<div class="card">
+<p>User: ${data.userId}</p>
+<p>Amount: ₹${data.amount}</p>
+<p>Status: ${data.status}</p>
 
-        ${data.status==="pending" ? `
-          <button class="approve" onclick="approve('${d.id}')">Approve</button>
-          <button class="reject" onclick="reject('${d.id}')">Reject</button>
-        ` : ``}
-      </div>
-    `;
-  });
+${data.status==="pending" ? `
+<button onclick="approve('${d.id}')">Approve</button>
+<button onclick="reject('${d.id}')">Reject</button>
+`:""}
+</div>
+`;
+});
 
-  document.getElementById("withdrawList").innerHTML = html;
+document.getElementById("withdrawList").innerHTML=html;
 }
 
 //
@@ -240,108 +257,78 @@ async function loadWithdraw(){
 //
 async function loadUsers(){
 
-  const snap = await getDocs(collection(db,"wallets"));
+const snap = await getDocs(collection(db,"wallets"));
 
-  let html="";
+let html="";
 
-  snap.forEach(d=>{
-    const data = d.data();
+snap.forEach(d=>{
+html+=`
+<div class="card">
+User: ${d.id} <br>
+Balance: ₹${d.data().balance}
+</div>
+`;
+});
 
-    html += `
-      <div class="card">
-        <p><b>User ID:</b> ${d.id}</p>
-        <p><b>Balance:</b> ₹${data.balance}</p>
-      </div>
-    `;
-  });
-
-  document.getElementById("userList").innerHTML = html;
+document.getElementById("userList").innerHTML=html;
 }
 
 //
-// WALLET VIEW
-//
-async function loadWallets(){
-
-  const snap = await getDocs(collection(db,"wallets"));
-
-  let html="";
-
-  snap.forEach(d=>{
-    const data = d.data();
-
-    html += `
-      <div class="card">
-        <p><b>User:</b> ${d.id}</p>
-        <p><b>Balance:</b> ₹${data.balance}</p>
-      </div>
-    `;
-  });
-
-  document.getElementById("walletList").innerHTML = html;
-}
-
-//
-// CAMPAIGNS VIEW
+// CAMPAIGNS
 //
 async function loadCampaigns(){
 
-  const snap = await getDocs(collection(db,"campaigns"));
+const snap = await getDocs(collection(db,"campaigns"));
 
-  let html="";
+let html="";
 
-  snap.forEach(d=>{
-    const data = d.data();
+snap.forEach(d=>{
+html+=`
+<div class="card">
+${d.data().title} - ₹${d.data().reward}
+</div>
+`;
+});
 
-    html += `
-      <div class="card">
-        <p><b>Title:</b> ${data.title}</p>
-        <p><b>Reward:</b> ₹${data.reward}</p>
-        <p><b>Status:</b> ${data.status}</p>
-      </div>
-    `;
-  });
-
-  document.getElementById("campaignList").innerHTML = html;
+document.getElementById("campaignList").innerHTML=html;
 }
 
 //
 // APPROVE
 //
-window.approve = async function(id){
+window.approve=async function(id){
 
-  const ref = doc(db,"withdrawals",id);
-  const snap = await getDoc(ref);
+const ref=doc(db,"withdrawals",id);
+const snap=await getDoc(ref);
 
-  const data = snap.data();
+const data=snap.data();
 
-  const walletRef = doc(db,"wallets",data.userId);
+await updateDoc(ref,{status:"approved"});
 
-  await updateDoc(ref,{status:"approved"});
-  await updateDoc(walletRef,{balance:increment(-data.amount)});
+await updateDoc(doc(db,"wallets",data.userId),{
+balance:increment(-data.amount)
+});
 
-  loadWithdraw();
-  loadStats();
+loadStats();
+loadWithdraw();
 };
 
 //
 // REJECT
- 
 //
-window.reject = async function(id){
+window.reject=async function(id){
 
-  await updateDoc(doc(db,"withdrawals",id),{
-    status:"rejected"
-  });
+await updateDoc(doc(db,"withdrawals",id),{
+status:"rejected"
+});
 
-  loadWithdraw();
-  loadStats();
+loadStats();
+loadWithdraw();
 };
 
 loadStats();
 loadWithdraw();
 loadUsers();
-loadWallets();
 loadCampaigns();
 
 </script>
