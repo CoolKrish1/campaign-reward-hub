@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin</title>
+<title>Admin Panel</title>
 </head>
 <body>
 
@@ -21,35 +21,38 @@ getDocs
 
 import {
 getAuth,
-onAuthStateChanged,
-signOut
+onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
-const app = initializeApp({
-apiKey:"AIzaSyD...",
-authDomain:"effortless-earn-7f39e.firebaseapp.com",
-projectId:"effortless-earn-7f39e"
-});
+const firebaseConfig = {
+apiKey: "YOUR_API_KEY_HERE",
+authDomain: "effortless-earn-7f39e.firebaseapp.com",
+projectId: "effortless-earn-7f39e",
+storageBucket: "effortless-earn-7f39e.appspot.com",
+messagingSenderId: "554178513766",
+appId: "1:554178513766:web:d8d7edf915a95349cb16a7"
+};
 
+const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-onAuthStateChanged(auth,(user)=>{
+onAuthStateChanged(auth, async(user)=>{
 if(!user){
 location.href="login.html";
+return;
 }
+
 load();
 });
 
 async function load(){
 
 const users = await getDocs(collection(db,"users"));
-document.getElementById("users").innerHTML =
-"<h3>Users</h3>" + users.size;
+document.getElementById("users").innerHTML = "Users: " + users.size;
 
 const w = await getDocs(collection(db,"withdrawals"));
-document.getElementById("withdraw").innerHTML =
-"<h3>Withdraw</h3>" + w.size;
+document.getElementById("withdraw").innerHTML = "Withdraw: " + w.size;
 
 }
 
