@@ -43,5 +43,16 @@ cursor:pointer;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import {
+import { 
 getFirestore,
+collection,
+getDocs,
+doc,
+setDoc,
+getDoc,
+updateDoc,
+increment
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEk
