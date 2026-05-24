@@ -95,7 +95,16 @@ input,select{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-r
 <div class="card">
 <table class="report-table">
 <thead>
-<tr><th>Time</th><th>Click ID</th><th>Offer</th><th>Event</th><th>Payout</th><th>Status</th><th>P1</th></tr>
+<tr>
+<th>TIME</th>
+<th>CLICK ID</th>
+<th>OFFER</th>
+<th>EVENT</th>
+<th>PAYOUT</th>
+<th>STATUS</th>
+<th>P1 (WORKER)</th>
+<th>P2 (REFER)</th>
+</tr>
 </thead>
 <tbody id="reportTable"></tbody>
 </table>
@@ -508,28 +517,197 @@ el("appCount").innerText=snap.size;
 }
 
 async function loadReports(){
-const q=query(collection(db,"reports"),where("userId","==",currentUser.uid));
-const snap=await getDocs(q);
-let html="";
 
-snap.forEach(d=>{
-const r=d.data();
-const status=r.status||"pending";
-const time=r.time?new Date(r.time).toLocaleString():"-";
-html+=`
-<tr>
-<td>${time}</td>
-<td>${r.trackingId||"-"}</td>
-<td><b>${r.offerName||"-"}</b></td>
-<td>${r.event||"Install & Login"}</td>
-<td><b>₹${r.payout||r.amount||0}</b></td>
-<td><span class="status ${status}">${status}</span></td>
-<td>${r.worker||"P1"}</td>
-</tr>`;
+const normalReports =
+await getDocs(
+query(
+collection(db,"reports"),
+where(
+"userId",
+"==",
+currentUser.uid
+)
+)
+);
+
+const smartReports =
+await getDocs(
+query(
+collection(db,"affiliate_reports"),
+where(
+"publisherId",
+"==",
+currentUser.uid
+)
+)
+);
+
+let html = "";
+
+let all = [];
+
+normalReports.forEach(d=>{
+
+all.push({
+type:"normal",
+...d.data()
 });
 
-el("reportTable").innerHTML=html||`<tr><td colspan="7">No Tracking Found. Start an offer first.</td></tr>`;
-el("reportCount").innerText=snap.size;
+});
+
+smartReports.forEach(d=>{
+
+all.push({
+type:"smart",
+...d.data()
+});
+
+});
+
+all.sort(
+(a,b)=>
+(b.time||0)-
+(a.time||0)
+);
+
+let total = 0;
+let approved = 0;
+let pending = 0;
+
+all.forEach(r=>{
+
+const payout =
+Number(
+r.payout ||
+r.userReward ||
+0
+);
+
+const p1 =
+Number(
+r.affiliateCommission ||
+0
+);
+
+const status =
+r.status ||
+"pending";
+
+total += payout;
+
+if(
+status==="approved"
+){
+approved += payout;
+}else{
+pending += payout;
+}
+
+const time =
+r.time
+? new Date(
+r.time
+).toLocaleString()
+: "-";
+
+html += `
+<tr>
+
+<td>
+${time}
+</td>
+
+<td>
+${r.trackingId || "-"}
+</td>
+
+<td>
+<b>
+${r.offerName ||
+r.title ||
+"-"}
+</b>
+</td>
+
+<td>
+${r.event ||
+"CPA"}
+</td>
+
+<td>
+<b style="
+color:green;
+">
+₹${payout}
+</b>
+</td>
+
+<td>
+
+<span class="
+status ${status}
+">
+
+${status}
+
+</span>
+
+</td>
+
+<td>
+
+${
+p1>0
+?`₹${p1}`
+:"-"
+}
+
+</td>
+
+<td>
+
+${
+r.refReward
+?`₹${r.refReward}`
+:"-"
+}
+
+</td>
+
+</tr>
+`;
+
+});
+
+el(
+"reportTable"
+).innerHTML =
+html ||
+`
+<tr>
+<td colspan="8">
+No reports found
+</td>
+</tr>
+`;
+
+el(
+"reportCount"
+).innerText =
+all.length;
+
+/* REPORT BOX */
+
+el(
+"dashBalance"
+).innerText =
+approved;
+
+el(
+"pendingAmount"
+).innerText =
+pending;
+
 }
 
 async function loadClicks(){
