@@ -198,8 +198,16 @@ display:inline-block;padding:6px 10px;border-radius:20px;font-size:12px;font-wei
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
 import {
-getFirestore,doc,getDoc,collection,getDocs,addDoc,query,where
+getFirestore,
+doc,
+getDoc,
+collection,
+getDocs,
+addDoc,
+query,
+where
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig={
@@ -214,252 +222,487 @@ appId:"1:554178513766:web:d8d7edf915a95349cb16a7"
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
+
 let currentUser=null;
 
 onAuthStateChanged(auth,async(user)=>{
-if(!user){ window.location.href="login.html"; return; }
+
+if(!user){
+window.location.href="login.html";
+return;
+}
+
 currentUser=user;
+
 await loadWallet();
 await loadCampaigns();
 await loadHistory();
 await loadReports();
 await loadWithdrawHistory();
+
 });
 
+/* WALLET */
 async function loadWallet(){
-const snap=await getDoc(doc(db,"users",currentUser.uid));
-let bal=0;
-if(snap.exists()) bal=snap.data().balance || 0;
 
-document.getElementById("balance").innerText=bal;
-document.getElementById("balance2").innerText=bal;
-document.getElementById("dashBalance").innerText=bal;
-document.getElementById("pubid").innerText="ID : PUB-"+currentUser.uid.slice(0,6).toUpperCase();
+const snap=await getDoc(
+doc(db,"users",currentUser.uid)
+);
+
+let bal=0;
+
+if(snap.exists()){
+bal=snap.data().balance || 0;
 }
 
+balance.innerText=bal;
+balance2.innerText=bal;
+dashBalance.innerText=bal;
+
+pubid.innerText=
+"ID : PUB-"+currentUser.uid
+.slice(0,6)
+.toUpperCase();
+
+}
+
+/* CAMPAIGNS */
 async function loadCampaigns(){
-const snap = await getDocs(collection(db,"campaigns"));
+
+const snap=
+await getDocs(
+collection(db,"campaigns")
+);
 
 let html="";
 
 snap.forEach(d=>{
-const c = d.data();
 
-const title = c.title || "Untitled";
-const reward = Number(c.reward || 0);
-const status = c.status || "active";
+const c=d.data();
 
-if(status !== "active") return;
+if(
+(c.status||"active")
+!=="active"
+)return;
 
-html += `
+html+=`
 <div class="offer-card">
-  <div class="offer-head">
-    <img src="${c.image || 'https://via.placeholder.com/100'}" class="offer-logo">
-    <div>
-      <h3>${title}</h3>
-      <p>${c.category || 'CPA Offer'}</p>
-      <span class="badge">ACTIVE</span>
-    </div>
-  </div>
 
-  <div class="reward-box">₹${reward}</div>
+<div class="offer-head">
 
-  <button class="start-btn" onclick="startTracking('${d.id}', '${title}', ${reward})">
-    START EARNING →
-  </button>
+<img
+src="${
+c.image ||
+'https://via.placeholder.com/100'
+}"
+class="offer-logo"
+>
+
+<div>
+<h3>
+${c.title}
+</h3>
+
+<p>
+${c.category || "CPA Offer"}
+</p>
+
+</div>
+
+<span class="badge">
+ACTIVE
+</span>
+
+</div>
+
+<div class="reward">
+
+<span>
+Reward
+</span>
+
+<b>
+₹${c.reward||0}
+</b>
+
+</div>
+
+<button
+class="start-btn"
+
+onclick="
+startTracking(
+'${d.id}',
+'${c.title}',
+${c.reward||0}
+)
+"
+
+>
+
+START EARNING →
+
+</button>
+
 </div>
 `;
+
 });
 
-document.getElementById("campaignList").innerHTML =
-html || "<div class='card'>No campaigns found</div>";
+campaignList.innerHTML=
+html ||
+"<div class='card'>No campaigns</div>";
+
 }
 
-window.applyCampaign=async function(id,title,reward){
-await addDoc(collection(db,"applications"),{
+/* TRACKING */
+window.startTracking=
+async function(
+campaignId,
+title,
+reward
+){
+
+const trackingId=
+Math.random()
+.toString(36)
+.slice(2,10);
+
+await addDoc(
+collection(db,"clicks"),
+{
 userId:currentUser.uid,
-campaignId:id,
+campaignId,
 campaignTitle:title,
-reward:Number(reward),
-status:"pending",
+reward,
+trackingId,
 time:Date.now()
-});
+}
+);
 
-window.startTracking = async function(campaignId, title, reward){
-window.startTracking = async function(campaignId,title,reward){
+await addDoc(
+collection(db,"applications"),
+{
+userId:currentUser.uid,
+campaignId,
+campaignTitle:title,
+reward,
+status:"pending",
+trackingId,
+time:Date.now()
+}
+);
 
-const trackingId = Math.random().toString(36).slice(2,10);
-
-await addDoc(collection(db,"clicks"),{
-userId: currentUser.uid,
-campaignId: campaignId,
-campaignTitle: title,
-reward: reward,
-trackingId: trackingId,
-time: Date.now()
-});
-
-await addDoc(collection(db,"applications"),{
-userId: currentUser.uid,
-campaignId: campaignId,
-campaignTitle: title,
-reward: reward,
-status: "pending",
-trackingId: trackingId,
-time: Date.now()
-});
-
-await addDoc(collection(db,"reports"),{
-userId: currentUser.uid,
-offerName: title,
-payout: reward,
-status: "pending",
-worker: "P1",
-trackingId: trackingId,
-time: Date.now()
-});
-
-alert("Applied Successfully");
-
-loadHistory();
-loadReports();
-
-};
-
-await addDoc(collection(db,"reports"),{
+await addDoc(
+collection(db,"reports"),
+{
 userId:currentUser.uid,
 offerName:title,
-payout:Number(reward),
+payout:reward,
 status:"pending",
 worker:"P1",
-trackingId:Math.random().toString(36).slice(2,10),
+trackingId,
 time:Date.now()
-});
+}
+);
 
-alert("Application submitted");
+alert(
+"Application Submitted"
+);
+
 loadHistory();
 loadReports();
+
 };
 
+/* HISTORY */
 async function loadHistory(){
-const q=query(collection(db,"applications"),where("userId","==",currentUser.uid));
-const snap=await getDocs(q);
+
+const q=query(
+collection(db,"applications"),
+where(
+"userId",
+"==",
+currentUser.uid
+)
+);
+
+const snap=
+await getDocs(q);
+
 let html="";
-let pendingAmount=0;
+let pending=0;
 
 snap.forEach(d=>{
+
 const h=d.data();
-if(h.status==="pending") pendingAmount+=Number(h.reward || 0);
+
+if(
+h.status==="pending"
+){
+pending+=
+Number(
+h.reward||0
+);
+}
 
 html+=`
 <div class="card">
-<p><b>Offer:</b> ${h.campaignTitle || h.campaignId}</p>
-<p><b>Reward:</b> ₹${h.reward || 0}</p>
-<p><b>Status:</b> <span class="status ${h.status || 'pending'}">${h.status || "pending"}</span></p>
+
+<p>
+Offer:
+${h.campaignTitle}
+</p>
+
+<p>
+Reward:
+₹${h.reward}
+</p>
+
+<p>
+Status:
+${h.status}
+</p>
+
 </div>
 `;
+
 });
 
-document.getElementById("historyList").innerHTML=html || "<div class='card'>No applications yet.</div>";
-document.getElementById("appCount").innerText=snap.size;
-document.getElementById("pendingAmount").innerText=pendingAmount;
+historyList.innerHTML=html;
+
+pendingAmount.innerText=
+pending;
+
+appCount.innerText=
+snap.size;
+
 }
 
+/* REPORTS */
 async function loadReports(){
-const q=query(collection(db,"reports"),where("userId","==",currentUser.uid));
-const snap=await getDocs(q);
+
+const q=query(
+collection(db,"reports"),
+where(
+"userId",
+"==",
+currentUser.uid
+)
+);
+
+const snap=
+await getDocs(q);
+
 let html="";
 
 snap.forEach(d=>{
+
 const r=d.data();
+
 html+=`
 <div class="card">
-<p><b>Offer:</b> ${r.offerName || "-"}</p>
-<p><b>Payout:</b> ₹${r.payout || 0}</p>
-<p><b>Status:</b> <span class="status ${r.status || 'pending'}">${r.status || "-"}</span></p>
-<p><b>Worker:</b> ${r.worker || "P1"}</p>
-<p><b>Tracking:</b> ${r.trackingId || "-"}</p>
+
+<p>
+${r.offerName}
+</p>
+
+<p>
+₹${r.payout}
+</p>
+
+<p>
+${r.status}
+</p>
+
+<p>
+${r.trackingId}
+</p>
+
 </div>
 `;
+
 });
 
-document.getElementById("reportList").innerHTML=html || "<div class='card'>No reports yet.</div>";
-document.getElementById("reportCount").innerText=snap.size;
+reportList.innerHTML=html;
+
+reportCount.innerText=
+snap.size;
+
 }
 
-window.withdrawRequest=async function(){
-const upi=document.getElementById("upi").value.trim();
-const amount=Number(document.getElementById("amount").value);
+/* WITHDRAW */
+window.withdrawRequest=
+async function(){
 
-if(!upi || amount<=0){ alert("Enter valid UPI and amount"); return; }
+const upi=
+document
+.getElementById(
+"upi"
+)
+.value;
 
-const snap=await getDoc(doc(db,"users",currentUser.uid));
-const balance=snap.exists() ? Number(snap.data().balance || 0) : 0;
+const amount=
+Number(
+document
+.getElementById(
+"amount"
+)
+.value
+);
 
-if(amount>balance){ alert("Insufficient balance"); return; }
-
-await addDoc(collection(db,"withdrawals"),{
-userId:currentUser.uid,
+await addDoc(
+collection(
+db,
+"withdrawals"
+),
+{
+userId:
+currentUser.uid,
 upi,
 amount,
-status:"pending",
-time:Date.now()
-});
+status:
+"pending",
+time:
+Date.now()
+}
+);
 
-await addDoc(collection(db,"reports"),{
-userId:currentUser.uid,
-offerName:"Withdraw Request",
-payout:amount,
-status:"pending",
-worker:"P1",
-trackingId:Math.random().toString(36).slice(2,10),
-time:Date.now()
-});
+alert(
+"Withdraw Sent"
+);
 
-alert("Withdraw request sent");
-document.getElementById("upi").value="";
-document.getElementById("amount").value="";
 loadWithdrawHistory();
-loadReports();
+
 };
 
+/* WITHDRAW HISTORY */
 async function loadWithdrawHistory(){
-const q=query(collection(db,"withdrawals"),where("userId","==",currentUser.uid));
-const snap=await getDocs(q);
+
+const q=query(
+collection(
+db,
+"withdrawals"
+),
+where(
+"userId",
+"==",
+currentUser.uid
+)
+);
+
+const snap=
+await getDocs(q);
+
 let html="";
 
 snap.forEach(d=>{
+
 const w=d.data();
+
 html+=`
 <div class="card">
-<p><b>Amount:</b> ₹${w.amount}</p>
-<p><b>UPI:</b> ${w.upi}</p>
-<p><b>Status:</b> <span class="status ${w.status || 'pending'}">${w.status || "pending"}</span></p>
+
+<p>
+₹${w.amount}
+</p>
+
+<p>
+${w.upi}
+</p>
+
+<p>
+${w.status}
+</p>
+
 </div>
 `;
+
 });
 
-document.getElementById("withdrawList").innerHTML=html || "<div class='card'>No withdraw requests.</div>";
+withdrawList.innerHTML=html;
+
 }
 
-window.showSection=function(id,btn){
-document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-document.getElementById(id).classList.add("active");
+/* SEARCH */
+window.searchOffers=
+function(){
 
-document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-if(btn) btn.classList.add("active");
-};
+let input=
+searchOffer.value
+.toLowerCase();
 
-window.searchOffers=function(){
-const input=document.getElementById("searchOffer").value.toLowerCase();
-document.querySelectorAll(".offer-card").forEach(card=>{
-card.style.display=card.innerText.toLowerCase().includes(input)?"block":"none";
+document
+.querySelectorAll(
+".offer-card"
+)
+.forEach(card=>{
+
+card.style.display=
+card.innerText
+.toLowerCase()
+.includes(input)
+?
+"block"
+:
+"none";
+
 });
+
 };
 
-window.logout=function(){
-signOut(auth).then(()=>window.location.href="login.html");
+/* NAV */
+window.showSection=
+function(
+id,
+btn
+){
+
+document
+.querySelectorAll(
+".section"
+)
+.forEach(
+s=>s.classList.remove(
+"active"
+)
+);
+
+document
+.getElementById(id)
+.classList.add(
+"active"
+);
+
+document
+.querySelectorAll(
+".nav button"
+)
+.forEach(
+b=>b.classList.remove(
+"active"
+)
+);
+
+if(btn)
+btn.classList.add(
+"active"
+);
+
 };
+
+/* LOGOUT */
+window.logout=
+function(){
+
+signOut(auth)
+.then(()=>{
+window.location.href=
+"login.html";
+});
+
+};
+
 </script>
 
 </body>
