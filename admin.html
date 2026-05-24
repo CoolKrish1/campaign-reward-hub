@@ -57,6 +57,7 @@ button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:poi
 <input id="reward" type="number" placeholder="Reward">
 <input id="image" placeholder="Image URL optional">
 <input id="category" placeholder="Category optional">
+<input id="offerLink" placeholder="Offer Link">
 <select id="status">
 <option value="active">Active</option>
 <option value="paused">Paused</option>
@@ -208,17 +209,45 @@ loadUsers();loadFraud();
 };
 
 window.addCampaign=async function(){
+
 const title=document.getElementById("title").value.trim();
 const reward=Number(document.getElementById("reward").value);
+
 const image=document.getElementById("image").value.trim();
+
 const category=document.getElementById("category").value.trim();
+
+const offerLink=document.getElementById("offerLink").value.trim();
+
 const status=document.getElementById("status").value;
 
-if(!title||!reward){alert("Title aur reward required hai");return;}
+if(!title || !reward){
+alert("Title aur reward required");
+return;
+}
 
 await addDoc(collection(db,"campaigns"),{
-title,reward,image,category,status,time:Date.now()
+title,
+reward,
+image,
+category,
+offerLink,
+status,
+time:Date.now()
 });
+
+document.getElementById("title").value="";
+document.getElementById("reward").value="";
+document.getElementById("image").value="";
+document.getElementById("category").value="";
+document.getElementById("offerLink").value="";
+
+alert("Campaign Added");
+
+loadCampaigns();
+loadStats();
+
+};
 
 document.getElementById("title").value="";
 document.getElementById("reward").value="";
