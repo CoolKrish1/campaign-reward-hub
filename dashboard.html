@@ -3,6 +3,11 @@
 <head>
 <title>Dashboard Pro</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
 *{
 margin:0;
@@ -172,6 +177,24 @@ color:white;
 cursor:pointer;
 font-weight:bold;
 }
+
+#withdraw input{
+width:100%;
+padding:14px;
+margin:10px 0;
+border:1px solid #ddd;
+border-radius:12px;
+}
+
+#withdraw button{
+padding:14px 20px;
+border:none;
+border-radius:12px;
+background:#2563eb;
+color:white;
+cursor:pointer;
+}
+
 </style>
 </head>
 
@@ -188,18 +211,19 @@ font-weight:bold;
 <div class="wallet-card">
 <p>Wallet Balance</p>
 <h2>₹<span id="balance">0</span></h2>
+  
 <div class="pubid" id="pubid">
 Loading...
 </div>
-
+  
+</div>
+  
 <button onclick="show('home')">📊 Dashboard</button>
 <button onclick="show('campaigns')">🎯 All Offers</button>
 <button onclick="show('history')">📄 Reports</button>
 <button onclick="show('withdraw')">💰 Wallet</button>
 <button onclick="show('reports')">📈 Tracking</button>
 <button onclick="logout()">🚪 Logout</button>
-
-</div>
   
 <!-- MAIN -->
 <div class="main">
@@ -319,8 +343,10 @@ loadWithdrawHistory();
 
 /* WALLET */
 async function loadWallet(){
-async function loadWallet(){
-const snap = await getDoc(doc(db,"users",currentUser.uid));
+
+const snap = await getDoc(
+doc(db,"users",currentUser.uid)
+);
 
 if(snap.exists()){
 
@@ -330,7 +356,11 @@ document.getElementById("balance").innerText = bal;
 document.getElementById("balance2").innerText = bal;
 document.getElementById("balanceHome").innerText = bal;
 
+document.getElementById("pubid").innerText =
+"PUB-" + currentUser.uid.slice(0,8);
+
 }
+
 }
 
 /* CAMPAIGNS */
@@ -420,21 +450,18 @@ alert("Insufficient Balance");
 return;
 }
 
-await addDoc(collection(db,"withdrawals"),{
+await addDoc(collection(db,"applications"),{
 userId: currentUser.uid,
-upi,
-amount,
+campaignId:id,
+campaignTitle:title,
+reward,
 status:"pending",
-time: Date.now()
+time:Date.now()
 });
 
 /* REPORT */
-const q = query(
-collection(db,"reports"),
-where("userId","==",currentUser.uid)
-);
-
-const snap = await getDocs(q);
+  
+await addDoc(collection(db,"reports"),{
 userId: currentUser.uid,
 offerName:"Withdraw Request",
 payout:amount,
@@ -444,13 +471,7 @@ worker:"P1",
 trackingId:Math.random().toString(36).slice(2,10),
 time:Date.now()
 });
-
-alert("Withdraw Requested");
-
-loadWithdrawHistory();
-loadReports();
-};
-
+  
 /* HISTORY */
 async function loadHistory(){
 
@@ -465,7 +486,7 @@ const h=d.data();
 
 html += `
 <div class="card">
-<p>Campaign: ${h.campaignId}</p>
+<p>Campaign: ${h.campaignTitle}</p>
 <p>Reward: ₹${h.reward}</p>
 <p>Status: ${h.status}</p>
 </div>
@@ -543,7 +564,7 @@ window.location.href="login.html";
 
 window.searchOffers = function(){
 
-let input =onkeyup="searchOffers()"
+let input =
 document.getElementById("searchOffer")
 .value
 .toLowerCase();
