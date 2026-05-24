@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>User Dashboard PRO</title>
+<title>Dashboard Pro</title>
 
 <style>
 body{
@@ -46,11 +46,11 @@ padding:20px;
 width:100%;
 }
 
-/* SECTIONS */
+/* SECTION */
 .section{display:none;}
 .active{display:block;}
 
-/* CARDS */
+/* CARD */
 .card{
 background:#111827;
 padding:15px;
@@ -59,24 +59,11 @@ border-radius:10px;
 border:1px solid #1f2937;
 }
 
-/* WALLET */
-.wallet{
-background:#0f172a;
-padding:20px;
-border-radius:12px;
-margin-bottom:20px;
-border:1px solid #1f2937;
-}
-
-.wallet h1{color:#38bdf8;}
-
-.btn{
-padding:8px 12px;
-background:#38bdf8;
-border:none;
-border-radius:6px;
-cursor:pointer;
-color:black;
+/* INPUT */
+input{
+padding:8px;
+margin:5px 0;
+width:200px;
 }
 </style>
 </head>
@@ -89,6 +76,7 @@ color:black;
 
 <button onclick="show('home')">Home</button>
 <button onclick="show('campaigns')">Campaigns</button>
+<button onclick="show('withdraw')">Withdraw</button>
 <button onclick="show('history')">History</button>
 <button onclick="show('reports')">Reports</button>
 <button onclick="logout()">Logout</button>
@@ -99,31 +87,42 @@ color:black;
 
 <!-- HOME -->
 <div id="home" class="section active">
-
-<div class="wallet">
-<h3>💰 Wallet Balance</h3>
-<h1 id="balance">₹0</h1>
-</div>
-
-<h3>Welcome 👋</h3>
-
+<h2>Welcome</h2>
+<h3>Balance: ₹<span id="balance">0</span></h3>
 </div>
 
 <!-- CAMPAIGNS -->
 <div id="campaigns" class="section">
-<h2>📢 Campaigns</h2>
+<h2>Campaigns</h2>
 <div id="campaignList"></div>
+</div>
+
+<!-- WITHDRAW -->
+<div id="withdraw" class="section">
+
+<h2>Withdraw Money</h2>
+
+<div class="card">
+<p>Balance: ₹<span id="balance2">0</span></p>
+
+<input id="upi" placeholder="UPI ID"><br>
+<input id="amount" type="number" placeholder="Amount"><br>
+<button onclick="withdraw()">Request Withdraw</button>
+</div>
+
+<div id="withdrawList"></div>
+
 </div>
 
 <!-- HISTORY -->
 <div id="history" class="section">
-<h2>📜 History</h2>
+<h2>History</h2>
 <div id="historyList"></div>
 </div>
 
 <!-- REPORTS -->
 <div id="reports" class="section">
-<h2>📊 Tracking Reports</h2>
+<h2>Reports</h2>
 <div id="reportList"></div>
 </div>
 
@@ -132,8 +131,11 @@ color:black;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } 
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import {
+getAuth,
+onAuthStateChanged,
+signOut
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
 import {
 getFirestore,
@@ -148,12 +150,12 @@ where
 
 /* FIREBASE */
 const firebaseConfig = {
-  apiKey: "AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEkTgc0E",
-  authDomain: "effortless-earn-7f39e.firebaseapp.com",
-  projectId: "effortless-earn-7f39e",
-  storageBucket: "effortless-earn-7f39e.appspot.com",
-  messagingSenderId: "554178513766",
-  appId: "1:554178513766:web:d8d7edf915a95349cb16a7"
+apiKey: "AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEkTgc0E",
+authDomain: "effortless-earn-7f39e.firebaseapp.com",
+projectId: "effortless-earn-7f39e",
+storageBucket: "effortless-earn-7f39e.appspot.com",
+messagingSenderId: "554178513766",
+appId: "1:554178513766:web:d8d7edf915a95349cb16a7"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -176,6 +178,7 @@ loadWallet();
 loadCampaigns();
 loadHistory();
 loadReports();
+loadWithdrawHistory();
 
 });
 
@@ -183,8 +186,8 @@ loadReports();
 async function loadWallet(){
 const snap = await getDoc(doc(db,"users",currentUser.uid));
 if(snap.exists()){
-document.getElementById("balance").innerText =
-"₹" + (snap.data().balance || 0);
+document.getElementById("balance").innerText = snap.data().balance || 0;
+document.getElementById("balance2").innerText = snap.data().balance || 0;
 }
 }
 
@@ -202,7 +205,7 @@ html += `
 <h3>${c.title}</h3>
 <p>Reward: ₹${c.reward}</p>
 
-<button class="btn" onclick="apply('${d.id}',${c.reward},'${c.title}')">
+<button onclick="apply('${d.id}','${c.title}',${c.reward})">
 Apply
 </button>
 
@@ -213,18 +216,15 @@ Apply
 document.getElementById("campaignList").innerHTML = html;
 }
 
-/* APPLY + REPORT */
-window.apply = async function(id,reward,title){
-
-const ip = await fetch("https://api.ipify.org?format=json")
-.then(r=>r.json())
-.then(d=>d.ip);
+/* APPLY */
+window.apply = async function(id,title,reward){
 
 await addDoc(collection(db,"applications"),{
 userId: currentUser.uid,
 campaignId: id,
 reward,
-status:"pending"
+status:"pending",
+time: Date.now()
 });
 
 /* REPORT */
@@ -233,29 +233,68 @@ userId: currentUser.uid,
 offerName: title,
 payout: reward,
 status:"pending",
-ip: ip,
-time: Date.now(),
+ip: "N/A",
 worker: "P1",
-trackingId: Math.random().toString(36).substring(2,10)
+trackingId: Math.random().toString(36).slice(2,10),
+time: Date.now()
 });
 
-alert("Applied Successfully");
-
+alert("Applied");
 loadHistory();
+loadReports();
+};
+
+/* WITHDRAW */
+window.withdraw = async function(){
+
+const upi = document.getElementById("upi").value;
+const amount = Number(document.getElementById("amount").value);
+
+const snap = await getDoc(doc(db,"users",currentUser.uid));
+const balance = snap.data().balance || 0;
+
+if(amount > balance){
+alert("Insufficient Balance");
+return;
+}
+
+await addDoc(collection(db,"withdrawals"),{
+userId: currentUser.uid,
+upi,
+amount,
+status:"pending",
+time: Date.now()
+});
+
+/* REPORT */
+await addDoc(collection(db,"reports"),{
+userId: currentUser.uid,
+offerName:"Withdraw Request",
+payout:amount,
+status:"pending",
+ip:"N/A",
+worker:"P1",
+trackingId:Math.random().toString(36).slice(2,10),
+time:Date.now()
+});
+
+alert("Withdraw Requested");
+
+loadWithdrawHistory();
 loadReports();
 };
 
 /* HISTORY */
 async function loadHistory(){
 
-const q = query(collection(db,"applications"), where("userId","==",currentUser.uid));
+const q = query(collection(db,"applications"),where("userId","==",currentUser.uid));
 
 const snap = await getDocs(q);
 
 let html="";
 
 snap.forEach(d=>{
-const h = d.data();
+const h=d.data();
 
 html += `
 <div class="card">
@@ -277,23 +316,45 @@ const snap = await getDocs(collection(db,"reports"));
 let html="";
 
 snap.forEach(d=>{
-const r = d.data();
+const r=d.data();
 
 html += `
 <div class="card">
-<p><b>Offer:</b> ${r.offerName}</p>
-<p><b>Payout:</b> ₹${r.payout}</p>
-<p><b>Status:</b> ${r.status}</p>
-<p><b>User:</b> ${r.userId}</p>
-<p><b>Worker:</b> ${r.worker}</p>
-<p><b>IP:</b> ${r.ip}</p>
-<p><b>Time:</b> ${new Date(r.time).toLocaleString()}</p>
-<p><b>ID:</b> ${r.trackingId}</p>
+<p>${r.offerName}</p>
+<p>₹${r.payout}</p>
+<p>${r.status}</p>
+<p>${r.userId}</p>
+<p>${r.worker}</p>
+<p>${r.time}</p>
 </div>
 `;
 });
 
 document.getElementById("reportList").innerHTML = html;
+}
+
+/* WITHDRAW HISTORY */
+async function loadWithdrawHistory(){
+
+const q = query(collection(db,"withdrawals"),where("userId","==",currentUser.uid));
+
+const snap = await getDocs(q);
+
+let html="";
+
+snap.forEach(d=>{
+const w=d.data();
+
+html += `
+<div class="card">
+<p>₹${w.amount}</p>
+<p>${w.upi}</p>
+<p>${w.status}</p>
+</div>
+`;
+});
+
+document.getElementById("withdrawList").innerHTML = html;
 }
 
 /* NAV */
