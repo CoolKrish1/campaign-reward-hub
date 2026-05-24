@@ -3,161 +3,114 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Campaign</title>
+<title>Campaign Offer</title>
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial,sans-serif;
-}
-
-body{
-background:#eef3fb;
-min-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-padding:20px;
-}
-
-.box{
-width:100%;
-max-width:430px;
-background:white;
-border-radius:28px;
-overflow:hidden;
-box-shadow:0 15px 40px rgba(0,0,0,.12);
-}
-
-.header{
-background:linear-gradient(135deg,#10b981,#065f46);
-padding:35px 20px;
-text-align:center;
-color:white;
-}
-
-.header h1{
-font-size:24px;
-margin-bottom:10px;
-}
-
-.reward{
-font-size:52px;
-font-weight:bold;
-color:#fde047;
-}
-
-.content{
-padding:25px;
-}
-
-.row{
-display:flex;
-justify-content:space-between;
-padding:12px 0;
-border-bottom:1px solid #eee;
-}
-
-input{
-width:100%;
-padding:16px;
-margin:18px 0;
-border:1px solid #ddd;
-border-radius:14px;
-font-size:16px;
-}
-
-.note{
-background:#ecfdf5;
-color:#065f46;
-padding:14px;
-border-radius:14px;
-font-size:14px;
-margin-bottom:18px;
-}
-
-button{
-width:100%;
-padding:18px;
-border:none;
-border-radius:16px;
-background:#065f46;
-color:white;
-font-size:16px;
-font-weight:bold;
-cursor:pointer;
-}
-
-button:disabled{
-background:#999;
-}
-
-.error{
-color:red;
-font-size:14px;
-margin-top:10px;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#eef3fb;min-height:100vh;padding:20px}
+.wrapper{max-width:720px;margin:auto;background:white;border-radius:28px;padding:26px;box-shadow:0 20px 50px rgba(0,0,0,.12)}
+.top{display:flex;gap:18px;align-items:center;border-bottom:1px solid #e5e7eb;padding-bottom:20px}
+.logo{width:82px;height:82px;border-radius:18px;object-fit:cover;background:#f1f5f9}
+.tag{display:inline-block;background:#dbeafe;color:#1d4ed8;padding:6px 12px;border-radius:8px;font-size:12px;margin-right:6px}
+.tag2{background:#f3e8ff;color:#7e22ce}
+h1{font-size:28px;margin:10px 0}
+.potential{color:#16a34a;font-weight:bold;font-size:18px}
+.box{border:1px solid #e5e7eb;border-radius:22px;padding:22px;margin-top:24px}
+.terms{color:#7f1d1d;line-height:1.7}
+.smart{background:#eff6ff;border:1px solid #bfdbfe}
+.smart label{font-weight:bold;color:#1e3a8a}
+.linkRow{display:flex;gap:10px;margin-top:12px}
+input,textarea{width:100%;padding:15px;border:1px solid #d1d5db;border-radius:14px;font-size:15px}
+.copyBtn{width:130px;background:#2563eb}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:14px;border-bottom:1px solid #eee;text-align:left}
+th{color:#6b7280;background:#f9fafb}
+.green{color:#16a34a;font-weight:bold}
+.instructions{background:#fffbeb;color:#713f12;line-height:1.7}
+.note{background:#ecfdf5;color:#065f46;padding:14px;border-radius:14px;margin:16px 0;font-size:14px}
+button{border:0;border-radius:14px;padding:15px;color:white;font-weight:bold;background:#065f46;cursor:pointer}
+.startBtn{width:100%;font-size:16px;padding:18px}
+.error{color:red;margin-top:12px}
+@media(max-width:600px){.top{align-items:flex-start}.linkRow{flex-direction:column}.copyBtn{width:100%}}
 </style>
 </head>
 
 <body>
 
-<div class="box">
+<div class="wrapper">
 
-<div class="header">
+<div class="top">
+<img id="offerImage" class="logo" src="https://via.placeholder.com/100">
+<div>
+<span class="tag">CAMPAIGN</span>
+<span class="tag tag2">CPA</span>
 <h1 id="campaignTitle">Loading...</h1>
-<p>Total Cashback</p>
-<div class="reward">₹<span id="userReward">0</span></div>
+<p class="potential">Total Potential: ₹<span id="totalReward">0</span></p>
+</div>
 </div>
 
-<div class="content">
-
-<div class="row">
-<span>Campaign</span>
-<b id="campaignName">-</b>
+<div class="box terms">
+<b>IMPORTANT TERMS & CONDITIONS:</b><br><br>
+<span id="termsText">
+Complete the task carefully. Payment/cashback will be handled by the campaign company.
+</span>
+<br><br>
+Report: offline/next day
 </div>
 
-<div class="row">
-<span>Cashback</span>
-<b>₹<span id="cashback">0</span></b>
+<div class="box smart">
+<label>🔗 YOUR SMART TRACKING LINK</label>
+<div class="linkRow">
+<input id="smartLinkInput" readonly>
+<button class="copyBtn" onclick="copySmartLink()">COPY</button>
+</div>
+<p style="font-size:13px;color:#2563eb;margin-top:10px">
+Use this link to track automatically.
+</p>
 </div>
 
+<div class="box">
+<h3>EARNING BREAKDOWN</h3>
+<table>
+<thead>
+<tr>
+<th>Event / Action</th>
+<th>Type</th>
+<th>Payout</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td id="eventName">Task Complete</td>
+<td>CPA</td>
+<td class="green">₹<span id="payoutAmount">0</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="box instructions">
+<b>INSTRUCTIONS FOR WORKERS:</b><br><br>
+<span id="instructionsText">
+Enter your UPI ID, confirm and complete the task on company website.
+</span>
+</div>
+
+<div class="box">
+<h3>Start Task</h3>
 <input id="upi" placeholder="Enter your UPI ID">
-
 <div class="note">
 Submit your UPI ID and start the task. Cashback/payment will be handled by the campaign company.
 </div>
-
-<button id="startBtn" onclick="startTask()">
-CONFIRM & START TASK ✨
-</button>
-
-import {
-getFirestore,
-collection,
-addDoc
-}
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-
+<button id="startBtn" class="startBtn" onclick="startTask()">CONFIRM & START TASK ✨</button>
 <div class="error" id="error"></div>
-
 </div>
+
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-
-import {
-getFirestore,
-collection,
-query,
-where,
-getDocs,
-addDoc
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { getFirestore,collection,query,where,getDocs,addDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig={
 apiKey:"AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEkTgc0E",
@@ -173,17 +126,10 @@ const db=getFirestore(app);
 
 let smartLink=null;
 
-function el(id){
-return document.getElementById(id);
-}
-
-function getSlug(){
-const params=new URLSearchParams(window.location.search);
-return params.get("slug");
-}
+function el(id){return document.getElementById(id);}
+function getSlug(){return new URLSearchParams(window.location.search).get("slug");}
 
 async function loadCampaign(){
-
 const slug=getSlug();
 
 if(!slug){
@@ -192,38 +138,53 @@ el("startBtn").disabled=true;
 return;
 }
 
-const q=query(
-collection(db,"smart_links"),
-where("slug","==",slug)
-);
-
+const q=query(collection(db,"smart_links"),where("slug","==",slug));
 const snap=await getDocs(q);
 
 if(snap.empty){
+el("campaignTitle").innerText="Campaign Not Found";
 el("error").innerText="Campaign not found";
 el("startBtn").disabled=true;
 return;
 }
 
 snap.forEach(d=>{
-smartLink={
-id:d.id,
-...d.data()
-};
+smartLink={id:d.id,...d.data()};
 });
 
-el("campaignTitle").innerText=smartLink.title || "Campaign";
-el("campaignName").innerText=smartLink.title || "-";
-el("userReward").innerText=smartLink.userReward || 0;
-el("cashback").innerText=smartLink.userReward || 0;
+const currentLink=window.location.href;
 
+el("campaignTitle").innerText=smartLink.title||"Campaign";
+el("totalReward").innerText=smartLink.userReward||0;
+el("payoutAmount").innerText=smartLink.userReward||0;
+el("smartLinkInput").value=currentLink;
+
+if(smartLink.image){
+el("offerImage").src=smartLink.image;
 }
 
-window.startTask=async function(){
+if(smartLink.terms){
+el("termsText").innerText=smartLink.terms;
+}
 
+if(smartLink.instructions){
+el("instructionsText").innerText=smartLink.instructions;
+}
+
+if(smartLink.event){
+el("eventName").innerText=smartLink.event;
+}
+}
+
+window.copySmartLink=function(){
+navigator.clipboard.writeText(el("smartLinkInput").value);
+alert("Smart link copied");
+};
+
+window.startTask=async function(){
 const upi=el("upi").value.trim();
 
-if(!upi || !upi.includes("@")){
+if(!upi||!upi.includes("@")){
 el("error").innerText="Enter valid UPI ID";
 return;
 }
@@ -236,37 +197,37 @@ return;
 el("startBtn").disabled=true;
 el("startBtn").innerText="PLEASE WAIT...";
 
-const trackingId=Math.random().toString(36).slice(2,10);
+const trackingId=smartLink.trackingId || Math.random().toString(36).slice(2,10);
 
 await addDoc(collection(db,"lead_submissions"),{
-slug:smartLink.slug,
-campaignId:smartLink.campaignId || "",
-publisherId:smartLink.publisherId || "",
-affiliateId:smartLink.affiliateId || "",
-title:smartLink.title || "",
-upi:upi,
-trackingId:trackingId,
-userReward:Number(smartLink.userReward || 0),
-affiliateCommission:Number(smartLink.affiliateCommission || 0),
+slug:smartLink.slug||"",
+campaignId:smartLink.campaignId||"",
+publisherId:smartLink.publisherId||"",
+affiliateId:smartLink.affiliateId||"",
+title:smartLink.title||"",
+upi,
+trackingId,
+userReward:Number(smartLink.userReward||0),
+affiliateCommission:Number(smartLink.affiliateCommission||0),
 status:"clicked",
 time:Date.now()
 });
 
 await addDoc(collection(db,"affiliate_reports"),{
-slug:smartLink.slug,
-campaignId:smartLink.campaignId || "",
-publisherId:smartLink.publisherId || "",
-affiliateId:smartLink.affiliateId || "",
-offerName:smartLink.title || "",
-trackingId:trackingId,
-upi:upi,
-userReward:Number(smartLink.userReward || 0),
-affiliateCommission:Number(smartLink.affiliateCommission || 0),
+slug:smartLink.slug||"",
+campaignId:smartLink.campaignId||"",
+publisherId:smartLink.publisherId||"",
+affiliateId:smartLink.affiliateId||"",
+offerName:smartLink.title||"",
+trackingId,
+upi,
+userReward:Number(smartLink.userReward||0),
+affiliateCommission:Number(smartLink.affiliateCommission||0),
 status:"clicked",
 time:Date.now()
 });
 
-let finalLink=smartLink.offerLink || "";
+let finalLink=smartLink.offerLink||"";
 
 if(finalLink){
 finalLink=finalLink.replace("{trackingId}",trackingId);
@@ -277,62 +238,9 @@ el("error").innerText="Offer link missing";
 el("startBtn").disabled=false;
 el("startBtn").innerText="CONFIRM & START TASK ✨";
 }
-
 };
 
 loadCampaign();
-
-window.startOffer = async function(){
-
-const upi =
-document
-.getElementById("upi")
-.value
-.trim();
-
-if(!upi){
-
-alert("UPI enter karo");
-
-return;
-
-}
-
-await addDoc(
-collection(db,"smart_users"),
-{
-slug:data.slug,
-
-upi:upi,
-
-publisherId:data.publisherId,
-
-trackingId:data.trackingId,
-
-reward:data.userReward,
-
-commission:data.affiliateCommission,
-
-status:"pending",
-
-time:Date.now()
-}
-);
-
-let finalLink =
-data.offerLink || "";
-
-finalLink =
-finalLink.replace(
-"{trackingId}",
-data.trackingId
-);
-
-window.location.href =
-finalLink;
-
-}
-
 </script>
 
 </body>
