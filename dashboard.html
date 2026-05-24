@@ -384,7 +384,13 @@ const reward=Number(c.reward||0);
 const status=(c.status||"active").toLowerCase();
 if(status!=="active")return;
 
-campaignCache[d.id]={id:d.id,title,reward,offerLink:c.offerLink||""};
+campaignCache[d.id]={
+id:d.id,
+title,
+reward,
+offerLink:c.offerLink||"",
+image:c.image||""
+};
 
 html+=`
 <div class="offer-card">
@@ -411,94 +417,70 @@ alert("Campaign not found");
 return;
 }
 
-const trackingId =
-Math.random()
-.toString(36)
-.slice(2,10);
+const trackingId = Math.random().toString(36).slice(2,10);
 
-const smartLink =
-window.location.origin +
-"/campaign.html?slug=" +
-trackingId;
-
-await addDoc(
-collection(db,"smart_links"),
-{
-slug:trackingId,
-
+await addDoc(collection(db,"clicks"),{
+userId:currentUser.uid,
 campaignId:c.id,
-
-publisherId:currentUser.uid,
-
-affiliateId:currentUser.uid,
-
-title:c.title,
-
-image:c.image || "",
-
-userReward:c.reward,
-
-affiliateCommission:0,
-
-offerLink:c.offerLink || "",
-
-status:"active",
-
-trackingId:trackingId,
-
+campaignTitle:c.title,
+reward:c.reward,
+trackingId,
 time:Date.now()
-}
-);
+});
 
-document.getElementById(
-"popupTitle"
-).innerText =
-c.title;
+await addDoc(collection(db,"applications"),{
+userId:currentUser.uid,
+campaignId:c.id,
+campaignTitle:c.title,
+reward:c.reward,
+status:"pending",
+trackingId,
+time:Date.now()
+});
 
-document.getElementById(
-"popupReward"
-).innerText =
-c.reward;
+await addDoc(collection(db,"reports"),{
+userId:currentUser.uid,
+offerName:c.title,
+event:"CLICK",
+payout:c.reward,
+status:"pending",
+worker:"P1",
+trackingId,
+time:Date.now()
+});
 
-document.getElementById(
-"popupPay"
-).innerText =
-c.reward;
+await addDoc(collection(db,"smart_links"),{
+slug:trackingId,
+campaignId:c.id,
+publisherId:currentUser.uid,
+affiliateId:currentUser.uid,
+title:c.title,
+image:c.image || "",
+userReward:c.reward,
+affiliateCommission:0,
+offerLink:c.offerLink || "",
+status:"active",
+trackingId,
+time:Date.now()
+});
 
-document.getElementById(
-"popupImage"
-).src =
-c.image ||
-"https://via.placeholder.com/100";
+const smartLink = window.location.origin + "/campaign.html?slug=" + trackingId;
 
-document.getElementById(
-"popupLink"
-).value =
-smartLink;
+document.getElementById("popupTitle").innerText = c.title;
+document.getElementById("popupReward").innerText = c.reward;
+document.getElementById("popupPay").innerText = c.reward;
+document.getElementById("popupImage").src = c.image || "https://via.placeholder.com/100";
+document.getElementById("popupLink").value = smartLink;
+document.getElementById("popupInstructions").innerText = "Copy this tracking link and share with users.";
+document.getElementById("offerPopup").style.display = "block";
 
-document.getElementById(
-"popupInstructions"
-).innerText =
-"Copy this tracking link and share with users.";
-
-document.getElementById(
-"offerPopup"
-).style.display =
-"block";
+await loadHistory();
+await loadReports();
+await loadClicks();
+await loadSmartLinks();
 
 };
 
-window.open(
-"campaign.html?slug="+smartSlug,
-"_blank"
-);
-
-loadHistory();
-loadReports();
-loadClicks();
-loadSmartLinks();
-
-};
 async function loadHistory(){
 const q=query(collection(db,"applications"),where("userId","==",currentUser.uid));
 const snap=await getDocs(q);
