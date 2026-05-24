@@ -464,7 +464,10 @@ trackingId,
 time:Date.now()
 });
 
-const smartLink = window.location.origin + "/campaign.html?slug=" + trackingId;
+const smartLink =
+window.location.origin +
+"/click.html?slug=" +
+trackingId;
 
 document.getElementById("popupTitle").innerText = c.title;
 document.getElementById("popupReward").innerText = c.reward;
