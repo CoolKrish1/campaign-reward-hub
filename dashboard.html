@@ -163,6 +163,166 @@ input,select{width:100%;padding:12px;margin:8px 0;border:1px solid #ddd;border-r
 
 </div>
 
+<!-- OFFER POPUP -->
+
+<div id="offerPopup"
+style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,.65);
+z-index:9999;
+overflow:auto;
+padding:20px;
+">
+
+<div
+style="
+max-width:760px;
+margin:auto;
+background:white;
+border-radius:30px;
+padding:25px;
+position:relative;
+">
+
+<button
+onclick="closeOfferPopup()"
+style="
+position:absolute;
+right:20px;
+top:20px;
+width:45px;
+height:45px;
+border-radius:50%;
+border:none;
+background:#eee;
+font-size:22px;
+cursor:pointer;
+">
+✕
+</button>
+
+<div style="display:flex;gap:15px;align-items:center;">
+
+<img
+id="popupImage"
+src=""
+style="
+width:90px;
+height:90px;
+border-radius:16px;
+object-fit:cover;
+">
+
+<div>
+
+<span style="
+background:#dbeafe;
+padding:6px 10px;
+border-radius:8px;
+font-size:12px;
+">
+CPA
+</span>
+
+<h2 id="popupTitle">
+Offer
+</h2>
+
+<p style="color:green;font-size:22px;">
+₹<span id="popupReward">0</span>
+</p>
+
+</div>
+
+</div>
+
+<hr style="margin:20px 0">
+
+<div
+style="
+padding:18px;
+background:#eff6ff;
+border-radius:18px;
+">
+
+<p>
+🔗 YOUR SMART TRACKING LINK
+</p>
+
+<div style="display:flex;gap:10px;margin-top:10px;">
+
+<input
+id="popupLink"
+readonly
+style="
+flex:1;
+padding:14px;
+">
+
+<button
+onclick="copyModalLink()"
+class="primary-btn"
+>
+COPY
+</button>
+
+</div>
+
+</div>
+
+<br>
+
+<div
+style="
+padding:20px;
+background:#fff7ed;
+border-radius:18px;
+">
+
+<h3>
+Instructions
+</h3>
+
+<br>
+
+<p id="popupInstructions">
+Complete task and earn cashback
+</p>
+
+</div>
+
+<br>
+
+<div
+style="
+padding:20px;
+background:#f9fafb;
+border-radius:18px;
+">
+
+<table style="width:100%;">
+
+<tr>
+<td>Event</td>
+<td>CPA</td>
+<td>
+₹<span id="popupPay">0</span>
+</td>
+</tr>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth,onAuthStateChanged,signOut } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
@@ -256,80 +416,77 @@ Math.random()
 .toString(36)
 .slice(2,10);
 
-const finalLink =
-(c.offerLink || "")
-.replace(
-"{trackingId}",
-trackingId
-);
-
-await addDoc(
-collection(db,"clicks"),
-{
-userId:currentUser.uid,
-campaignId:c.id,
-campaignTitle:c.title,
-reward:c.reward,
-trackingId:trackingId,
-time:Date.now()
-}
-);
-
-await addDoc(
-collection(db,"applications"),
-{
-userId:currentUser.uid,
-campaignId:c.id,
-campaignTitle:c.title,
-reward:c.reward,
-status:"pending",
-trackingId:trackingId,
-time:Date.now()
-}
-);
-
-await addDoc(
-collection(db,"reports"),
-{
-userId:currentUser.uid,
-offerName:c.title,
-event:"CLICK",
-payout:c.reward,
-status:"pending",
-trackingId:trackingId,
-time:Date.now()
-}
-);
-
-const smartSlug =
-Math.random()
-.toString(36)
-.slice(2,8);
+const smartLink =
+window.location.origin +
+"/campaign.html?slug=" +
+trackingId;
 
 await addDoc(
 collection(db,"smart_links"),
 {
-slug:smartSlug,
+slug:trackingId,
 
 campaignId:c.id,
 
 publisherId:currentUser.uid,
 
+affiliateId:currentUser.uid,
+
 title:c.title,
+
+image:c.image || "",
 
 userReward:c.reward,
 
-affiliateCommission:20,
+affiliateCommission:0,
 
-trackingId:trackingId,
-
-offerLink:finalLink,
+offerLink:c.offerLink || "",
 
 status:"active",
+
+trackingId:trackingId,
 
 time:Date.now()
 }
 );
+
+document.getElementById(
+"popupTitle"
+).innerText =
+c.title;
+
+document.getElementById(
+"popupReward"
+).innerText =
+c.reward;
+
+document.getElementById(
+"popupPay"
+).innerText =
+c.reward;
+
+document.getElementById(
+"popupImage"
+).src =
+c.image ||
+"https://via.placeholder.com/100";
+
+document.getElementById(
+"popupLink"
+).value =
+smartLink;
+
+document.getElementById(
+"popupInstructions"
+).innerText =
+"Copy this tracking link and share with users.";
+
+document.getElementById(
+"offerPopup"
+).style.display =
+"block";
+
+};
 
 window.open(
 "campaign.html?slug="+smartSlug,
@@ -526,6 +683,18 @@ window.copyText=function(text){
 navigator.clipboard.writeText(text);
 alert("Link copied");
 };
+
+window.closeOfferPopup=function(){
+document.getElementById("offerPopup").style.display="none";
+};
+
+window.copyModalLink=function(){
+navigator.clipboard.writeText(
+document.getElementById("popupLink").value
+);
+alert("Tracking link copied");
+};
+
 </script>
 
 </body>
