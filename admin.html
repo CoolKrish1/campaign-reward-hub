@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
 body{display:flex;background:#0b1220;color:white}
@@ -13,16 +12,13 @@ body{display:flex;background:#0b1220;color:white}
 .sidebar button{width:100%;padding:12px;margin:7px 0;background:#1f2937;color:white;border:0;border-radius:10px;cursor:pointer;text-align:left}
 .sidebar button:hover{background:#2563eb}
 .main{margin-left:250px;padding:25px;width:100%}
-.section{display:none}
-.active{display:block}
+.section{display:none}.active{display:block}
 .card{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:15px;margin:12px 0}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
 input,select{width:100%;padding:12px;margin:7px 0;border:0;border-radius:10px;background:#1f2937;color:white}
 button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:pointer}
-.green{background:#16a34a;color:white}
-.red{background:#dc2626;color:white}
-.blue{background:#2563eb;color:white}
-.orange{background:#f97316;color:white}
+.green{background:#16a34a;color:white}.red{background:#dc2626;color:white}.blue{background:#2563eb;color:white}.orange{background:#f97316;color:white}
+.small{color:#94a3b8;font-size:13px}
 </style>
 </head>
 
@@ -38,82 +34,50 @@ button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:poi
 <button onclick="show('reports')">📄 Reports</button>
 <button onclick="show('fraud')">🛡 Fraud Logs</button>
 <button onclick="show('clicks')">🖱 Clicks</button>
+<button onclick="show('smartleads')">🧾 Smart Leads</button>
+<button onclick="show('revenue')">💹 Revenue Share</button>
 <button onclick="show('postback')">🔗 Postback</button>
 </div>
 
 <div class="main">
 
-<div id="dashboard" class="section active">
-<h2>Dashboard</h2>
-<div class="grid" id="stats"></div>
-</div>
-
-<div id="users" class="section">
-<h2>Users</h2>
-<div id="userList"></div>
-</div>
+<div id="dashboard" class="section active"><h2>Dashboard</h2><div class="grid" id="stats"></div></div>
+<div id="users" class="section"><h2>Users</h2><div id="userList"></div></div>
 
 <div id="campaigns" class="section">
 <h2>Campaign Manager</h2>
-
 <div class="card">
 <h3>Add Campaign</h3>
-
 <input id="title" placeholder="Campaign Title">
 <input id="reward" type="number" placeholder="Reward">
 <input id="image" placeholder="Image URL optional">
 <input id="category" placeholder="Category optional">
 <input id="offerLink" placeholder="CPA Offer Link, example: https://offer.com/?click_id={trackingId}">
-
-<p style="color:#94a3b8;font-size:13px;">
-Use {trackingId} in offer link.
-</p>
-
+<p class="small">Use {trackingId} in offer link.</p>
 <select id="status">
 <option value="active">Active</option>
 <option value="paused">Paused</option>
 </select>
-
 <button class="action blue" onclick="addCampaign()">Add Campaign</button>
 </div>
-
 <div id="campaignList"></div>
 </div>
 
-<div id="applications" class="section">
-<h2>Applications</h2>
-<div id="appList"></div>
-</div>
-
-<div id="withdraw" class="section">
-<h2>Withdraw Requests</h2>
-<div id="withdrawList"></div>
-</div>
-
-<div id="reports" class="section">
-<h2>Reports</h2>
-<div id="reportList"></div>
-</div>
-
-<div id="fraud" class="section">
-<h2>Fraud Logs</h2>
-<div id="fraudList"></div>
-</div>
-
-<div id="clicks" class="section">
-<h2>Click Tracking</h2>
-<div id="clickList"></div>
-</div>
+<div id="applications" class="section"><h2>Applications</h2><div id="appList"></div></div>
+<div id="withdraw" class="section"><h2>Withdraw Requests</h2><div id="withdrawList"></div></div>
+<div id="reports" class="section"><h2>Reports</h2><div id="reportList"></div></div>
+<div id="fraud" class="section"><h2>Fraud Logs</h2><div id="fraudList"></div></div>
+<div id="clicks" class="section"><h2>Click Tracking</h2><div id="clickList"></div></div>
+<div id="smartleads" class="section"><h2>Smart Leads</h2><div id="smartLeadList"></div></div>
+<div id="revenue" class="section"><h2>Revenue Share</h2><div id="revenueList"></div></div>
 
 <div id="postback" class="section">
 <h2>Postback URL</h2>
-
 <div class="card">
 <p><b>Your Postback URL:</b></p>
 <input id="postbackUrl" readonly value="https://campaign-reward-hub.vercel.app/api/postback?trackingId={click_id}&payout={payout}&status=approved">
 <button class="action blue" onclick="copyPostback()">Copy Postback</button>
 </div>
-
 <div class="card">
 <p><b>Use this in CPA network:</b></p>
 <p>trackingId = click id</p>
@@ -126,46 +90,26 @@ Use {trackingId} in offer link.
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { getFirestore,collection,getDocs,doc,updateDoc,increment,addDoc,deleteDoc } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-import {
-getFirestore,
-collection,
-getDocs,
-doc,
-updateDoc,
-increment,
-addDoc,
-deleteDoc
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-
-const firebaseConfig = {
-apiKey: "AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEkTgc0E",
-authDomain: "effortless-earn-7f39e.firebaseapp.com",
-projectId: "effortless-earn-7f39e",
-storageBucket: "effortless-earn-7f39e.appspot.com",
-messagingSenderId: "554178513766",
-appId: "1:554178513766:web:d8d7edf915a95349cb16a7"
+const firebaseConfig={
+apiKey:"AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEkTgc0E",
+authDomain:"effortless-earn-7f39e.firebaseapp.com",
+projectId:"effortless-earn-7f39e",
+storageBucket:"effortless-earn-7f39e.appspot.com",
+messagingSenderId:"554178513766",
+appId:"1:554178513766:web:d8d7edf915a95349cb16a7"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-function el(id){
-return document.getElementById(id);
-}
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+function el(id){return document.getElementById(id);}
 
 window.show=function(id){
-document.querySelectorAll(".section").forEach(s=>{
-s.classList.remove("active");
-});
-
+document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
 const section=el(id);
-
-if(section){
-section.classList.add("active");
-}else{
-alert("Section not found: "+id);
-}
+if(section)section.classList.add("active");
+else alert("Section not found: "+id);
 };
 
 async function loadStats(){
@@ -175,15 +119,12 @@ const apps=await getDocs(collection(db,"applications"));
 const withdraws=await getDocs(collection(db,"withdrawals"));
 const reports=await getDocs(collection(db,"reports"));
 const clicks=await getDocs(collection(db,"clicks"));
+const leads=await getDocs(collection(db,"lead_submissions"));
+const revenue=await getDocs(collection(db,"revenue_share"));
 
-let pendingWithdraw=0;
-let totalPayout=0;
-
-withdraws.forEach(d=>{
-let w=d.data();
-if(w.status==="pending") pendingWithdraw++;
-if(w.status==="approved") totalPayout+=Number(w.amount||0);
-});
+let pendingWithdraw=0,totalPayout=0,totalProfit=0,totalCommission=0;
+withdraws.forEach(d=>{let w=d.data();if(w.status==="pending")pendingWithdraw++;if(w.status==="approved")totalPayout+=Number(w.amount||0);});
+revenue.forEach(d=>{let r=d.data();totalProfit+=Number(r.profit||0);totalCommission+=Number(r.affiliateCommission||0);});
 
 el("stats").innerHTML=`
 <div class="card"><h3>Users</h3><h1>${users.size}</h1></div>
@@ -194,98 +135,51 @@ el("stats").innerHTML=`
 <div class="card"><h3>Total Payout</h3><h1>₹${totalPayout}</h1></div>
 <div class="card"><h3>Reports</h3><h1>${reports.size}</h1></div>
 <div class="card"><h3>Clicks</h3><h1>${clicks.size}</h1></div>
+<div class="card"><h3>Smart Leads</h3><h1>${leads.size}</h1></div>
+<div class="card"><h3>Affiliate Commission</h3><h1>₹${totalCommission}</h1></div>
+<div class="card"><h3>Your Profit</h3><h1>₹${totalProfit}</h1></div>
 `;
 }
 
 async function loadUsers(){
 const snap=await getDocs(collection(db,"users"));
 let html="";
-
 snap.forEach(d=>{
 let u=d.data();
-
-html+=`
-<div class="card">
-<p><b>UID:</b> ${d.id}</p>
-<p><b>Email:</b> ${u.email||"-"}</p>
-<p><b>Balance:</b> ₹${u.balance||0}</p>
-<p><b>Role:</b> ${u.role||"user"}</p>
-<p><b>Status:</b> ${u.status||"active"}</p>
-
+html+=`<div class="card">
+<p><b>UID:</b> ${d.id}</p><p><b>Email:</b> ${u.email||"-"}</p><p><b>Balance:</b> ₹${u.balance||0}</p>
+<p><b>Role:</b> ${u.role||"user"}</p><p><b>Status:</b> ${u.status||"active"}</p>
 <button class="action green" onclick="addBalance('${d.id}')">Add Balance</button>
 <button class="action orange" onclick="cutBalance('${d.id}')">Cut Balance</button>
 <button class="action red" onclick="banUser('${d.id}')">Ban</button>
-</div>
-`;
+</div>`;
 });
-
 el("userList").innerHTML=html||"<div class='card'>No users</div>";
 }
 
 window.addBalance=async function(uid){
 let amount=Number(prompt("Amount add karo"));
-
 if(!amount)return;
-
-await updateDoc(doc(db,"users",uid),{
-balance:increment(amount)
-});
-
-await addDoc(collection(db,"reports"),{
-type:"BALANCE_ADDED",
-userId:uid,
-amount,
-status:"success",
-time:Date.now()
-});
-
-loadUsers();
-loadStats();
-loadReports();
+await updateDoc(doc(db,"users",uid),{balance:increment(amount)});
+await addDoc(collection(db,"reports"),{type:"BALANCE_ADDED",userId:uid,amount,status:"success",time:Date.now()});
+loadUsers();loadStats();loadReports();
 };
 
 window.cutBalance=async function(uid){
 let amount=Number(prompt("Amount cut karo"));
-
 if(!amount)return;
-
-await updateDoc(doc(db,"users",uid),{
-balance:increment(-amount)
-});
-
-await addDoc(collection(db,"reports"),{
-type:"BALANCE_CUT",
-userId:uid,
-amount,
-status:"success",
-time:Date.now()
-});
-
-loadUsers();
-loadStats();
-loadReports();
+await updateDoc(doc(db,"users",uid),{balance:increment(-amount)});
+await addDoc(collection(db,"reports"),{type:"BALANCE_CUT",userId:uid,amount,status:"success",time:Date.now()});
+loadUsers();loadStats();loadReports();
 };
 
 window.banUser=async function(uid){
-await updateDoc(doc(db,"users",uid),{
-status:"banned"
-});
-
-await addDoc(collection(db,"fraud_logs"),{
-userId:uid,
-reason:"Manual ban by admin",
-status:"flagged",
-time:Date.now()
-});
-
-loadUsers();
-loadFraud();
+await updateDoc(doc(db,"users",uid),{status:"banned"});
+await addDoc(collection(db,"fraud_logs"),{userId:uid,reason:"Manual ban by admin",status:"flagged",time:Date.now()});
+loadUsers();loadFraud();
 };
-  
 
-/* CAMPAIGN ADD */
 window.addCampaign=async function(){
-
 const title=el("title").value.trim();
 const reward=Number(el("reward").value);
 const image=el("image").value.trim();
@@ -293,380 +187,182 @@ const category=el("category").value.trim();
 const offerLink=el("offerLink").value.trim();
 const status=el("status").value;
 
-if(!title || !reward){
-alert("Title aur reward required hai");
-return;
-}
+if(!title||!reward){alert("Title aur reward required hai");return;}
 
-await addDoc(collection(db,"campaigns"),{
-title,
-reward,
-image,
-category,
-offerLink,
-status,
-time:Date.now()
-});
-
-el("title").value="";
-el("reward").value="";
-el("image").value="";
-el("category").value="";
-el("offerLink").value="";
-
+await addDoc(collection(db,"campaigns"),{title,reward,image,category,offerLink,status,time:Date.now()});
+el("title").value="";el("reward").value="";el("image").value="";el("category").value="";el("offerLink").value="";
 alert("Campaign added");
-
-loadCampaigns();
-loadStats();
-
+loadCampaigns();loadStats();
 };
 
 async function loadCampaigns(){
-
 const snap=await getDocs(collection(db,"campaigns"));
 let html="";
-
 snap.forEach(d=>{
-
 let c=d.data();
-
-html+=`
-<div class="card">
-
+html+=`<div class="card">
 <h3>${c.title}</h3>
-
 <p><b>Reward:</b> ₹${c.reward}</p>
 <p><b>Category:</b> ${c.category||"-"}</p>
 <p><b>Status:</b> ${c.status||"active"}</p>
 <p><b>Offer Link:</b> ${c.offerLink||"-"}</p>
-
-<button class="action green" onclick="activateCampaign('${d.id}')">
-Active
-</button>
-
-<button class="action orange" onclick="pauseCampaign('${d.id}')">
-Pause
-</button>
-
-<button class="action red" onclick="deleteCampaign('${d.id}')">
-Delete
-</button>
-
-</div>
-`;
-
+<button class="action green" onclick="activateCampaign('${d.id}')">Active</button>
+<button class="action orange" onclick="pauseCampaign('${d.id}')">Pause</button>
+<button class="action red" onclick="deleteCampaign('${d.id}')">Delete</button>
+</div>`;
 });
-
-el("campaignList").innerHTML =
-html || "<div class='card'>No campaigns</div>";
-
+el("campaignList").innerHTML=html||"<div class='card'>No campaigns</div>";
 }
 
-window.activateCampaign=async function(id){
+window.activateCampaign=async function(id){await updateDoc(doc(db,"campaigns",id),{status:"active"});loadCampaigns();};
+window.pauseCampaign=async function(id){await updateDoc(doc(db,"campaigns",id),{status:"paused"});loadCampaigns();};
+window.deleteCampaign=async function(id){if(!confirm("Delete campaign?"))return;await deleteDoc(doc(db,"campaigns",id));loadCampaigns();loadStats();};
 
-await updateDoc(doc(db,"campaigns",id),{
-status:"active"
-});
-
-loadCampaigns();
-
-};
-
-window.pauseCampaign=async function(id){
-
-await updateDoc(doc(db,"campaigns",id),{
-status:"paused"
-});
-
-loadCampaigns();
-
-};
-
-window.deleteCampaign=async function(id){
-
-if(!confirm("Delete campaign?")) return;
-
-await deleteDoc(doc(db,"campaigns",id));
-
-loadCampaigns();
-loadStats();
-
-};
-
-/* APPLICATIONS */
 async function loadApplications(){
-
 const snap=await getDocs(collection(db,"applications"));
 let html="";
-
 snap.forEach(d=>{
-
 let a=d.data();
-
-html+=`
-<div class="card">
-
-<p><b>User:</b> ${a.userId}</p>
-<p><b>Campaign:</b> ${a.campaignTitle||a.campaignId}</p>
-<p><b>Reward:</b> ₹${a.reward||0}</p>
-<p><b>Status:</b> ${a.status||"pending"}</p>
-<p><b>Tracking:</b> ${a.trackingId||"-"}</p>
-
-<button class="action green"
-onclick="approveApp('${d.id}','${a.userId}',${Number(a.reward||0)})">
-Approve
-</button>
-
-<button class="action red"
-onclick="rejectApp('${d.id}')">
-Reject
-</button>
-
-</div>
-`;
-
+html+=`<div class="card">
+<p><b>User:</b> ${a.userId}</p><p><b>Campaign:</b> ${a.campaignTitle||a.campaignId}</p>
+<p><b>Reward:</b> ₹${a.reward||0}</p><p><b>Status:</b> ${a.status||"pending"}</p><p><b>Tracking:</b> ${a.trackingId||"-"}</p>
+<button class="action green" onclick="approveApp('${d.id}','${a.userId}',${Number(a.reward||0)})">Approve</button>
+<button class="action red" onclick="rejectApp('${d.id}')">Reject</button>
+</div>`;
 });
-
-el("appList").innerHTML =
-html || "<div class='card'>No applications</div>";
-
+el("appList").innerHTML=html||"<div class='card'>No applications</div>";
 }
 
 window.approveApp=async function(id,userId,reward){
-
-await updateDoc(doc(db,"applications",id),{
-status:"approved"
-});
-
-await updateDoc(doc(db,"users",userId),{
-balance:increment(Number(reward))
-});
-
-await addDoc(collection(db,"reports"),{
-type:"APPLICATION_APPROVED",
-userId,
-amount:Number(reward),
-status:"success",
-time:Date.now()
-});
-
+await updateDoc(doc(db,"applications",id),{status:"approved"});
+await updateDoc(doc(db,"users",userId),{balance:increment(Number(reward))});
+await addDoc(collection(db,"reports"),{type:"APPLICATION_APPROVED",userId,amount:Number(reward),status:"success",time:Date.now()});
 alert("Approved + Balance Added");
-
-loadApplications();
-loadUsers();
-loadReports();
-loadStats();
-
+loadApplications();loadUsers();loadReports();loadStats();
 };
 
 window.rejectApp=async function(id){
-
-await updateDoc(doc(db,"applications",id),{
-status:"rejected"
-});
-
-await addDoc(collection(db,"reports"),{
-type:"APPLICATION_REJECTED",
-appId:id,
-status:"failed",
-time:Date.now()
-});
-
-loadApplications();
-loadReports();
-loadStats();
-
+await updateDoc(doc(db,"applications",id),{status:"rejected"});
+await addDoc(collection(db,"reports"),{type:"APPLICATION_REJECTED",appId:id,status:"failed",time:Date.now()});
+loadApplications();loadReports();loadStats();
 };
 
-/* WITHDRAW */
 async function loadWithdraw(){
-
 const snap=await getDocs(collection(db,"withdrawals"));
 let html="";
-
 snap.forEach(d=>{
-
 let w=d.data();
-
-html+=`
-<div class="card">
-
-<p><b>User:</b> ${w.userId}</p>
-<p><b>Amount:</b> ₹${w.amount}</p>
-<p><b>UPI:</b> ${w.upi||"-"}</p>
-<p><b>Status:</b> ${w.status||"pending"}</p>
-
-<button class="action green"
-onclick="approveWithdraw('${d.id}','${w.userId}',${Number(w.amount||0)})">
-Approve
-</button>
-
-<button class="action red"
-onclick="rejectWithdraw('${d.id}')">
-Reject
-</button>
-
-</div>
-`;
-
+html+=`<div class="card">
+<p><b>User:</b> ${w.userId}</p><p><b>Amount:</b> ₹${w.amount}</p><p><b>UPI:</b> ${w.upi||"-"}</p><p><b>Status:</b> ${w.status||"pending"}</p>
+<button class="action green" onclick="approveWithdraw('${d.id}','${w.userId}',${Number(w.amount||0)})">Approve</button>
+<button class="action red" onclick="rejectWithdraw('${d.id}')">Reject</button>
+</div>`;
 });
-
-el("withdrawList").innerHTML =
-html || "<div class='card'>No withdraw requests</div>";
-
+el("withdrawList").innerHTML=html||"<div class='card'>No withdraw requests</div>";
 }
 
 window.approveWithdraw=async function(id,userId,amount){
-
-await updateDoc(doc(db,"withdrawals",id),{
-status:"approved"
-});
-
-await updateDoc(doc(db,"users",userId),{
-balance:increment(-Number(amount))
-});
-
-await addDoc(collection(db,"reports"),{
-type:"WITHDRAW_APPROVED",
-userId,
-amount:Number(amount),
-status:"success",
-time:Date.now()
-});
-
+await updateDoc(doc(db,"withdrawals",id),{status:"approved"});
+await updateDoc(doc(db,"users",userId),{balance:increment(-Number(amount))});
+await addDoc(collection(db,"reports"),{type:"WITHDRAW_APPROVED",userId,amount:Number(amount),status:"success",time:Date.now()});
 alert("Withdraw approved + balance cut");
-
-loadWithdraw();
-loadUsers();
-loadReports();
-loadStats();
-
+loadWithdraw();loadUsers();loadReports();loadStats();
 };
 
 window.rejectWithdraw=async function(id){
-
-await updateDoc(doc(db,"withdrawals",id),{
-status:"rejected"
-});
-
-await addDoc(collection(db,"reports"),{
-type:"WITHDRAW_REJECTED",
-withdrawId:id,
-status:"failed",
-time:Date.now()
-});
-
-loadWithdraw();
-loadReports();
-loadStats();
-
+await updateDoc(doc(db,"withdrawals",id),{status:"rejected"});
+await addDoc(collection(db,"reports"),{type:"WITHDRAW_REJECTED",withdrawId:id,status:"failed",time:Date.now()});
+loadWithdraw();loadReports();loadStats();
 };
 
-/* REPORTS */
 async function loadReports(){
-
 const snap=await getDocs(collection(db,"reports"));
 let html="";
-
 snap.forEach(d=>{
-
 let r=d.data();
-
-html+=`
-<div class="card">
-
-<p><b>Type:</b> ${r.type||"REPORT"}</p>
-<p><b>User:</b> ${r.userId||"-"}</p>
-<p><b>Amount:</b> ₹${r.amount||r.payout||0}</p>
-<p><b>Status:</b> ${r.status||"-"}</p>
+html+=`<div class="card">
+<p><b>Type:</b> ${r.type||"REPORT"}</p><p><b>User:</b> ${r.userId||"-"}</p>
+<p><b>Amount:</b> ₹${r.amount||r.payout||0}</p><p><b>Status:</b> ${r.status||"-"}</p>
 <p><b>Time:</b> ${r.time?new Date(r.time).toLocaleString():"-"}</p>
-
-</div>
-`;
-
+</div>`;
 });
-
-el("reportList").innerHTML =
-html || "<div class='card'>No reports</div>";
-
+el("reportList").innerHTML=html||"<div class='card'>No reports</div>";
 }
 
-/* FRAUD */
 async function loadFraud(){
-
 const snap=await getDocs(collection(db,"fraud_logs"));
 let html="";
-
 snap.forEach(d=>{
-
 let f=d.data();
-
-html+=`
-<div class="card">
-
-<p><b>User:</b> ${f.userId||"-"}</p>
-<p><b>Reason:</b> ${f.reason||"-"}</p>
-<p><b>Status:</b> ${f.status||"-"}</p>
-<p><b>Time:</b> ${f.time?new Date(f.time).toLocaleString():"-"}</p>
-
-</div>
-`;
-
+html+=`<div class="card">
+<p><b>User:</b> ${f.userId||"-"}</p><p><b>Reason:</b> ${f.reason||"-"}</p>
+<p><b>Status:</b> ${f.status||"-"}</p><p><b>Time:</b> ${f.time?new Date(f.time).toLocaleString():"-"}</p>
+</div>`;
 });
-
-el("fraudList").innerHTML =
-html || "<div class='card'>No fraud logs</div>";
-
+el("fraudList").innerHTML=html||"<div class='card'>No fraud logs</div>";
 }
 
-/* CLICKS */
 async function loadClicks(){
-
 const snap=await getDocs(collection(db,"clicks"));
 let html="";
-
 snap.forEach(d=>{
-
 let c=d.data();
-
-html+=`
-<div class="card">
-
-<p><b>User:</b> ${c.userId||"-"}</p>
-<p><b>Campaign:</b> ${c.campaignTitle||"-"}</p>
-<p><b>Reward:</b> ₹${c.reward||0}</p>
-<p><b>Tracking ID:</b> ${c.trackingId||"-"}</p>
+html+=`<div class="card">
+<p><b>User:</b> ${c.userId||"-"}</p><p><b>Campaign:</b> ${c.campaignTitle||"-"}</p>
+<p><b>Reward:</b> ₹${c.reward||0}</p><p><b>Tracking ID:</b> ${c.trackingId||"-"}</p>
 <p><b>Time:</b> ${c.time?new Date(c.time).toLocaleString():"-"}</p>
-
-</div>
-`;
-
+</div>`;
 });
-
-el("clickList").innerHTML =
-html || "<div class='card'>No clicks yet</div>";
-
+el("clickList").innerHTML=html||"<div class='card'>No clicks yet</div>";
 }
 
-/* POSTBACK COPY */
+async function loadSmartLeads(){
+const snap=await getDocs(collection(db,"lead_submissions"));
+let html="";
+snap.forEach(d=>{
+const l=d.data();
+html+=`<div class="card">
+<p><b>Campaign:</b> ${l.title||"-"}</p>
+<p><b>UPI:</b> ${l.upi||"-"}</p>
+<p><b>Tracking:</b> ${l.trackingId||"-"}</p>
+<p><b>Publisher:</b> ${l.publisherId||"-"}</p>
+<p><b>User Reward:</b> ₹${l.userReward||0}</p>
+<p><b>Commission:</b> ₹${l.affiliateCommission||0}</p>
+<p><b>Status:</b> ${l.status||"-"}</p>
+<p><b>Time:</b> ${l.time?new Date(l.time).toLocaleString():"-"}</p>
+</div>`;
+});
+el("smartLeadList").innerHTML=html||"<div class='card'>No smart leads</div>";
+}
+
+async function loadRevenueShare(){
+const snap=await getDocs(collection(db,"revenue_share"));
+let html="";
+snap.forEach(d=>{
+const r=d.data();
+html+=`<div class="card">
+<p><b>Tracking:</b> ${r.trackingId||"-"}</p>
+<p><b>Campaign:</b> ${r.campaignId||"-"}</p>
+<p><b>Publisher:</b> ${r.publisherId||"-"}</p>
+<p><b>Company Payout:</b> ₹${r.companyPayout||0}</p>
+<p><b>User Reward:</b> ₹${r.userReward||0}</p>
+<p><b>Affiliate Commission:</b> ₹${r.affiliateCommission||0}</p>
+<p><b>Your Profit:</b> ₹${r.profit||0}</p>
+<p><b>Status:</b> ${r.status||"-"}</p>
+<p><b>Time:</b> ${r.time?new Date(r.time).toLocaleString():"-"}</p>
+</div>`;
+});
+el("revenueList").innerHTML=html||"<div class='card'>No revenue share data</div>";
+}
+
 window.copyPostback=function(){
-
 const input=el("postbackUrl");
-
-if(!input){
-alert("Postback input not found");
-return;
-}
-
+if(!input){alert("Postback input not found");return;}
 navigator.clipboard.writeText(input.value);
-
 alert("Postback copied");
-
 };
 
-/* REFRESH */
 function refreshAll(){
-
 loadStats();
 loadUsers();
 loadCampaigns();
@@ -675,12 +371,11 @@ loadWithdraw();
 loadReports();
 loadFraud();
 loadClicks();
-
+loadSmartLeads();
+loadRevenueShare();
 }
 
 refreshAll();
-
 </script>
-
 </body>
 </html>
