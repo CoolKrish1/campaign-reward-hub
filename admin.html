@@ -2,1128 +2,355 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-
-<title>Admin Panel PRO MAX v2</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
 
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
-}
-
-body{
-background:#0b1220;
-color:white;
-display:flex;
-}
-
-.sidebar{
-width:260px;
-height:100vh;
-background:#111827;
-position:fixed;
-left:0;
-top:0;
-padding:20px;
-overflow:auto;
-border-right:1px solid #1f2937;
-}
-
-.logo{
-font-size:22px;
-font-weight:700;
-margin-bottom:25px;
-color:#38bdf8;
-}
-
-.admin-card{
-background:#0f172a;
-padding:18px;
-border-radius:14px;
-margin-bottom:20px;
-}
-
-.admin-card h3{
-margin-bottom:10px;
-}
-
-.admin-card p{
-color:#94a3b8;
-font-size:14px;
-}
-
-.sidebar button{
-width:100%;
-padding:14px;
-margin:8px 0;
-border:none;
-border-radius:12px;
-background:#1f2937;
-color:white;
-cursor:pointer;
-font-size:15px;
-text-align:left;
-}
-
-.sidebar button:hover{
-background:#2563eb;
-}
-
-.main{
-margin-left:260px;
-width:100%;
-padding:25px;
-}
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:25px;
-}
-
-.topbar h1{
-font-size:28px;
-}
-
-.search{
-width:320px;
-padding:12px;
-border:none;
-border-radius:12px;
-background:#1f2937;
-color:white;
-}
-
-.cards{
-display:grid;
-grid-template-columns:
-repeat(auto-fit,minmax(220px,1fr));
-gap:15px;
-margin-bottom:25px;
-}
-
-.card{
-background:#111827;
-padding:18px;
-border-radius:14px;
-border:1px solid #1f2937;
-}
-
-.card h3{
-font-size:14px;
-color:#94a3b8;
-margin-bottom:10px;
-}
-
-.card h2{
-font-size:30px;
-}
-
-.section{
-display:none;
-}
-
-.active{
-display:block;
-}
-
-.table{
-width:100%;
-border-collapse:collapse;
-margin-top:15px;
-}
-
-.table th{
-background:#111827;
-padding:14px;
-text-align:left;
-}
-
-.table td{
-padding:14px;
-border-bottom:1px solid #1f2937;
-}
-
-.green{
-background:#16a34a;
-color:white;
-padding:6px 12px;
-border-radius:8px;
-}
-
-.red{
-background:#dc2626;
-color:white;
-padding:6px 12px;
-border-radius:8px;
-}
-
-.orange{
-background:#f59e0b;
-color:black;
-padding:6px 12px;
-border-radius:8px;
-}
-
-.form-card{
-background:#111827;
-padding:20px;
-border-radius:14px;
-margin-bottom:20px;
-}
-
-.form-card h3{
-margin-bottom:15px;
-}
-
-input,
-select{
-width:100%;
-padding:12px;
-margin:8px 0;
-border:none;
-border-radius:10px;
-background:#1f2937;
-color:white;
-}
-
-.action-btn{
-padding:12px 16px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-margin-right:5px;
-margin-top:5px;
-}
-
-.btn-blue{
-background:#2563eb;
-color:white;
-}
-
-.btn-green{
-background:#16a34a;
-color:white;
-}
-
-.btn-red{
-background:#dc2626;
-color:white;
-}
-
-.btn-orange{
-background:#f97316;
-color:white;
-}
-
-.grid{
-display:grid;
-grid-template-columns:
-repeat(auto-fit,minmax(250px,1fr));
-gap:15px;
-}
-
-.offer-card{
-background:#111827;
-padding:18px;
-border-radius:14px;
-border:1px solid #1f2937;
-}
-
-.offer-card img{
-width:100%;
-height:180px;
-object-fit:cover;
-border-radius:10px;
-margin-bottom:10px;
-}
-
-.offer-card h3{
-margin-bottom:10px;
-}
-
-.offer-card p{
-margin:6px 0;
-}
-
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{display:flex;background:#0b1220;color:white}
+.sidebar{width:250px;height:100vh;background:#111827;padding:20px;position:fixed}
+.sidebar h2{color:#38bdf8;margin-bottom:20px}
+.sidebar button{width:100%;padding:12px;margin:7px 0;background:#1f2937;color:white;border:0;border-radius:10px;cursor:pointer;text-align:left}
+.sidebar button:hover{background:#2563eb}
+.main{margin-left:250px;padding:25px;width:100%}
+.section{display:none}.active{display:block}
+.card{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:15px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+input,select{width:100%;padding:12px;margin:7px 0;border:0;border-radius:10px;background:#1f2937;color:white}
+button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:pointer}
+.green{background:#16a34a;color:white}.red{background:#dc2626;color:white}.blue{background:#2563eb;color:white}.orange{background:#f97316;color:white}
 </style>
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
-
 <div class="sidebar">
-
-<div class="logo">
-⚡ ADMIN PRO MAX
+<h2>⚡ Admin Panel</h2>
+<button onclick="show('dashboard')">📊 Dashboard</button>
+<button onclick="show('users')">👤 Users</button>
+<button onclick="show('campaigns')">🎯 Campaigns</button>
+<button onclick="show('applications')">📥 Applications</button>
+<button onclick="show('withdraw')">💰 Withdraw</button>
+<button onclick="show('reports')">📄 Reports</button>
+<button onclick="show('fraud')">🛡 Fraud Logs</button>
 </div>
-
-<div class="admin-card">
-<h3>Administrator</h3>
-<p>Campaign Reward Hub</p>
-</div>
-
-<button onclick="show('dashboard')">
-📊 Dashboard
-</button>
-
-<button onclick="show('users')">
-👤 Users
-</button>
-
-<button onclick="show('campaigns')">
-🎯 Campaigns
-</button>
-
-<button onclick="show('applications')">
-📥 Applications
-</button>
-
-<button onclick="show('withdraw')">
-💰 Withdraw
-</button>
-
-<button onclick="show('reports')">
-📄 Reports
-</button>
-
-</div>
-
-<!-- MAIN -->
 
 <div class="main">
 
-<div class="topbar">
-<h1>Admin Dashboard</h1>
-
-<input
-class="search"
-placeholder="Search..."
->
-</div>
-
-<!-- DASHBOARD -->
-
 <div id="dashboard" class="section active">
-
-<div class="cards">
-
-<div class="card">
-<h3>Total Users</h3>
-<h2 id="usersCount">0</h2>
+<h2>Dashboard</h2>
+<div class="grid" id="stats"></div>
 </div>
-
-<div class="card">
-<h3>Total Campaigns</h3>
-<h2 id="campaignCount">0</h2>
-</div>
-
-<div class="card">
-<h3>Applications</h3>
-<h2 id="applicationCount">0</h2>
-</div>
-
-<div class="card">
-<h3>Withdraw Requests</h3>
-<h2 id="withdrawCount">0</h2>
-</div>
-
-</div>
-
-<div id="stats"></div>
-
-</div>
-
-<!-- USERS -->
 
 <div id="users" class="section">
-
-<h2>Users Management</h2>
-
+<h2>Users</h2>
 <div id="userList"></div>
-
 </div>
-
-<!-- CAMPAIGNS -->
 
 <div id="campaigns" class="section">
+<h2>Campaign Manager</h2>
 
-<h2>Campaign Management</h2>
-
-<div class="form-card">
-
+<div class="card">
 <h3>Add Campaign</h3>
-
-<input
-id="title"
-placeholder="Campaign Title"
->
-
-<input
-id="reward"
-type="number"
-placeholder="Reward Amount"
->
-
-<input
-id="image"
-placeholder="Image URL"
->
-
-<input
-id="category"
-placeholder="Category"
->
-
-<button
-class="action-btn btn-blue"
-onclick="addCampaign()"
->
-Add Campaign
-</button>
-
+<input id="title" placeholder="Campaign Title">
+<input id="reward" type="number" placeholder="Reward">
+<input id="image" placeholder="Image URL optional">
+<input id="category" placeholder="Category optional">
+<select id="status">
+<option value="active">Active</option>
+<option value="paused">Paused</option>
+</select>
+<button class="action blue" onclick="addCampaign()">Add Campaign</button>
 </div>
 
-<div
-class="grid"
-id="campaignList"
-></div>
-
+<div id="campaignList"></div>
 </div>
-
-  <!-- APPLICATIONS -->
 
 <div id="applications" class="section">
-
 <h2>Applications</h2>
-
-<div id="applicationList"></div>
-
+<div id="appList"></div>
 </div>
-
-<!-- WITHDRAW -->
 
 <div id="withdraw" class="section">
-
 <h2>Withdraw Requests</h2>
-
 <div id="withdrawList"></div>
-
 </div>
 
-<!-- REPORTS -->
-
 <div id="reports" class="section">
-
 <h2>Reports</h2>
-
 <div id="reportList"></div>
+</div>
 
+<div id="fraud" class="section">
+<h2>Fraud Logs</h2>
+<div id="fraudList"></div>
 </div>
 
 </div>
 
 <script type="module">
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import {
-getFirestore,
-collection,
-getDocs,
-addDoc,
-updateDoc,
-deleteDoc,
-doc,
-increment
-}
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-
-/* FIREBASE */
+getFirestore, collection, getDocs, doc, updateDoc,
+increment, addDoc, deleteDoc
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
-
-  apiKey: "AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEkTgc0E",
-  authDomain: "effortless-earn-7f39e.firebaseapp.com",
-  projectId: "effortless-earn-7f39e",
-  storageBucket: "effortless-earn-7f39e.firebasestorage.app",
-  messagingSenderId: "554178513766",
-  appId: "1:554178513766:web:d8d7edf915a95349cb16a7",
-  measurementId: "G-FLV8NJM726"
-
+apiKey: "AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEkTgc0E",
+authDomain: "effortless-earn-7f39e.firebaseapp.com",
+projectId: "effortless-earn-7f39e",
+storageBucket: "effortless-earn-7f39e.appspot.com",
+messagingSenderId: "554178513766",
+appId: "1:554178513766:web:d8d7edf915a95349cb16a7"
 };
 
 const app = initializeApp(firebaseConfig);
-
 const db = getFirestore(app);
 
-/* NAVIGATION */
-
-window.show = function(id){
-
-document
-.querySelectorAll(".section")
-.forEach(section=>{
-
-section.classList.remove("active");
-
-});
-
-document
-.getElementById(id)
-.classList.add("active");
-
+window.show=function(id){
+document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
 };
 
-/* DASHBOARD */
+async function loadStats(){
+const users=await getDocs(collection(db,"users"));
+const campaigns=await getDocs(collection(db,"campaigns"));
+const apps=await getDocs(collection(db,"applications"));
+const withdraws=await getDocs(collection(db,"withdrawals"));
+const reports=await getDocs(collection(db,"reports"));
 
-async function loadDashboard(){
+let pendingWithdraw=0,totalPayout=0;
+withdraws.forEach(d=>{
+let w=d.data();
+if(w.status==="pending") pendingWithdraw++;
+if(w.status==="approved") totalPayout+=Number(w.amount||0);
+});
 
-const users =
-await getDocs(
-collection(db,"users")
-);
-
-const campaigns =
-await getDocs(
-collection(db,"campaigns")
-);
-
-const apps =
-await getDocs(
-collection(db,"applications")
-);
-
-const withdraws =
-await getDocs(
-collection(db,"withdrawals")
-);
-
-document
-.getElementById("usersCount")
-.innerText = users.size;
-
-document
-.getElementById("campaignCount")
-.innerText = campaigns.size;
-
-document
-.getElementById("applicationCount")
-.innerText = apps.size;
-
-document
-.getElementById("withdrawCount")
-.innerText = withdraws.size;
-
+document.getElementById("stats").innerHTML=`
+<div class="card"><h3>Users</h3><h1>${users.size}</h1></div>
+<div class="card"><h3>Campaigns</h3><h1>${campaigns.size}</h1></div>
+<div class="card"><h3>Applications</h3><h1>${apps.size}</h1></div>
+<div class="card"><h3>Withdraws</h3><h1>${withdraws.size}</h1></div>
+<div class="card"><h3>Pending Withdraw</h3><h1>${pendingWithdraw}</h1></div>
+<div class="card"><h3>Total Payout</h3><h1>₹${totalPayout}</h1></div>
+<div class="card"><h3>Reports</h3><h1>${reports.size}</h1></div>
+`;
 }
-
-/* USERS */
 
 async function loadUsers(){
-
-const snap =
-await getDocs(
-collection(db,"users")
-);
-
-let html = "";
-
-snap.forEach(user=>{
-
-const u = user.data();
-
-html += `
-
+const snap=await getDocs(collection(db,"users"));
+let html="";
+snap.forEach(d=>{
+let u=d.data();
+html+=`
 <div class="card">
-
-<h3>${u.name || "No Name"}</h3>
-
-<p>${u.email || ""}</p>
-
-<p>
-Balance :
-₹${u.balance || 0}
-</p>
-
-<button
-class="action-btn btn-green"
-onclick="
-addBalance(
-'${user.id}'
-)"
->
-Add Balance
-</button>
-
-</div>
-
-`;
-
+<p><b>UID:</b> ${d.id}</p>
+<p><b>Email:</b> ${u.email||"-"}</p>
+<p><b>Balance:</b> ₹${u.balance||0}</p>
+<p><b>Role:</b> ${u.role||"user"}</p>
+<button class="action green" onclick="addBalance('${d.id}')">Add Balance</button>
+<button class="action orange" onclick="cutBalance('${d.id}')">Cut Balance</button>
+<button class="action red" onclick="banUser('${d.id}')">Ban</button>
+</div>`;
 });
-
-document
-.getElementById("userList")
-.innerHTML = html;
-
+document.getElementById("userList").innerHTML=html||"<div class='card'>No users</div>";
 }
 
-/* ADD BALANCE */
-
-window.addBalance =
-async function(uid){
-
-let amount =
-prompt(
-"Enter Amount"
-);
-
-if(!amount) return;
-
-await updateDoc(
-doc(db,"users",uid),
-{
-balance:
-increment(
-Number(amount)
-)
-}
-);
-
-alert("Balance Added");
-
-loadUsers();
-
+window.addBalance=async function(uid){
+let amount=Number(prompt("Amount add karo"));
+if(!amount)return;
+await updateDoc(doc(db,"users",uid),{balance:increment(amount)});
+loadUsers();loadStats();
 };
 
-/* CAMPAIGNS */
+window.cutBalance=async function(uid){
+let amount=Number(prompt("Amount cut karo"));
+if(!amount)return;
+await updateDoc(doc(db,"users",uid),{balance:increment(-amount)});
+loadUsers();loadStats();
+};
 
-window.addCampaign =
-async function(){
+window.banUser=async function(uid){
+await updateDoc(doc(db,"users",uid),{status:"banned"});
+await addDoc(collection(db,"fraud_logs"),{
+userId:uid,reason:"Manual ban by admin",status:"flagged",time:Date.now()
+});
+loadUsers();loadFraud();
+};
 
-const title =
-document
-.getElementById("title")
-.value;
+window.addCampaign=async function(){
+const title=document.getElementById("title").value.trim();
+const reward=Number(document.getElementById("reward").value);
+const image=document.getElementById("image").value.trim();
+const category=document.getElementById("category").value.trim();
+const status=document.getElementById("status").value;
 
-const reward =
-Number(
-document
-.getElementById("reward")
-.value
-);
+if(!title||!reward){alert("Title aur reward required hai");return;}
 
-const image =
-document
-.getElementById("image")
-.value;
+await addDoc(collection(db,"campaigns"),{
+title,reward,image,category,status,time:Date.now()
+});
 
-const category =
-document
-.getElementById("category")
-.value;
+document.getElementById("title").value="";
+document.getElementById("reward").value="";
+document.getElementById("image").value="";
+document.getElementById("category").value="";
 
-if(!title){
-alert("Enter Title");
-return;
-}
-
-await addDoc(
-collection(db,"campaigns"),
-{
-title,
-reward,
-image,
-category,
-status:"active",
-time:Date.now()
-}
-);
-
-alert("Campaign Added");
-
-loadCampaigns();
-
-loadDashboard();
-
+alert("Campaign added");
+loadCampaigns();loadStats();
 };
 
 async function loadCampaigns(){
-
-const snap =
-await getDocs(
-collection(db,"campaigns")
-);
-
-let html = "";
-
-snap.forEach(campaign=>{
-
-const c =
-campaign.data();
-
-html += `
-
-<div class="offer-card">
-
-<img
-src="${
-c.image ||
-'https://via.placeholder.com/400'
-}"
->
-
+const snap=await getDocs(collection(db,"campaigns"));
+let html="";
+snap.forEach(d=>{
+let c=d.data();
+html+=`
+<div class="card">
 <h3>${c.title}</h3>
-
-<p>
-Reward :
-₹${c.reward}
-</p>
-
-<p>
-Category :
-${c.category || ""}
-</p>
-
-<p>
-Status :
-${c.status}
-</p>
-
-<button
-class="action-btn btn-red"
-onclick="
-deleteCampaign(
-'${campaign.id}'
-)"
->
-Delete
-</button>
-
-</div>
-
-`;
-
+<p><b>Reward:</b> ₹${c.reward}</p>
+<p><b>Category:</b> ${c.category||"-"}</p>
+<p><b>Status:</b> ${c.status||"active"}</p>
+<button class="action green" onclick="activateCampaign('${d.id}')">Active</button>
+<button class="action orange" onclick="pauseCampaign('${d.id}')">Pause</button>
+<button class="action red" onclick="deleteCampaign('${d.id}')">Delete</button>
+</div>`;
 });
-
-document
-.getElementById("campaignList")
-.innerHTML = html;
-
+document.getElementById("campaignList").innerHTML=html||"<div class='card'>No campaigns</div>";
 }
 
-/* DELETE CAMPAIGN */
-
-window.deleteCampaign =
-async function(id){
-
-if(
-!confirm(
-"Delete Campaign?"
-)
-)
-return;
-
-await deleteDoc(
-doc(db,"campaigns",id)
-);
-
+window.activateCampaign=async function(id){
+await updateDoc(doc(db,"campaigns",id),{status:"active"});
 loadCampaigns();
-
-loadDashboard();
-
 };
 
-/////////////////////////////////////////////////////
-/* APPLICATIONS */
-/////////////////////////////////////////////////////
+window.pauseCampaign=async function(id){
+await updateDoc(doc(db,"campaigns",id),{status:"paused"});
+loadCampaigns();
+};
+
+window.deleteCampaign=async function(id){
+if(!confirm("Delete campaign?"))return;
+await deleteDoc(doc(db,"campaigns",id));
+loadCampaigns();loadStats();
+};
 
 async function loadApplications(){
-
-const snap =
-await getDocs(
-collection(db,"applications")
-);
-
+const snap=await getDocs(collection(db,"applications"));
 let html="";
-
 snap.forEach(d=>{
-
-const a=d.data();
-
-html += `
-
+let a=d.data();
+html+=`
 <div class="card">
-
-<h3>
-${a.campaignTitle || a.campaignId}
-</h3>
-
-<p>
-User :
-${a.userId}
-</p>
-
-<p>
-Reward :
-₹${a.reward || 0}
-</p>
-
-<p>
-Status :
-${a.status || "pending"}
-</p>
-
-<button
-class="action-btn btn-green"
-onclick="
-approveApplication(
-'${d.id}',
-'${a.userId}',
-${a.reward || 0}
-)"
->
-Approve
-</button>
-
-<button
-class="action-btn btn-red"
-onclick="
-rejectApplication(
-'${d.id}'
-)"
->
-Reject
-</button>
-
-</div>
-
-`;
-
+<p><b>User:</b> ${a.userId}</p>
+<p><b>Campaign:</b> ${a.campaignTitle||a.campaignId}</p>
+<p><b>Reward:</b> ₹${a.reward||0}</p>
+<p><b>Status:</b> ${a.status||"pending"}</p>
+<button class="action green" onclick="approveApp('${d.id}','${a.userId}',${Number(a.reward||0)})">Approve</button>
+<button class="action red" onclick="rejectApp('${d.id}')">Reject</button>
+</div>`;
 });
-
-document
-.getElementById("applicationList")
-.innerHTML = html;
-
+document.getElementById("appList").innerHTML=html||"<div class='card'>No applications</div>";
 }
 
-/* APPROVE APPLICATION */
-
-window.approveApplication =
-async function(
-id,
-userId,
-reward
-){
-
-await updateDoc(
-doc(db,"applications",id),
-{
-status:"approved"
-}
-);
-
-await updateDoc(
-doc(db,"users",userId),
-{
-balance:
-increment(
-Number(reward)
-)
-}
-);
-
-await addDoc(
-collection(db,"reports"),
-{
-type:"APPLICATION_APPROVED",
-userId,
-amount:reward,
-status:"success",
-time:Date.now()
-}
-);
-
-alert("Application Approved");
-
-loadApplications();
-loadUsers();
-
+window.approveApp=async function(id,userId,reward){
+await updateDoc(doc(db,"applications",id),{status:"approved"});
+await updateDoc(doc(db,"users",userId),{balance:increment(Number(reward))});
+await addDoc(collection(db,"reports"),{
+type:"APPLICATION_APPROVED",userId,amount:Number(reward),status:"success",time:Date.now()
+});
+alert("Approved + Balance Added");
+loadApplications();loadUsers();loadReports();loadStats();
 };
 
-/* REJECT APPLICATION */
-
-window.rejectApplication =
-async function(id){
-
-await updateDoc(
-doc(db,"applications",id),
-{
-status:"rejected"
-}
-);
-
-await addDoc(
-collection(db,"reports"),
-{
-type:"APPLICATION_REJECTED",
-appId:id,
-status:"failed",
-time:Date.now()
-}
-);
-
-alert("Application Rejected");
-
-loadApplications();
-
+window.rejectApp=async function(id){
+await updateDoc(doc(db,"applications",id),{status:"rejected"});
+await addDoc(collection(db,"reports"),{
+type:"APPLICATION_REJECTED",appId:id,status:"failed",time:Date.now()
+});
+loadApplications();loadReports();loadStats();
 };
 
-/////////////////////////////////////////////////////
-/* WITHDRAW REQUESTS */
-/////////////////////////////////////////////////////
-
-async function loadWithdraws(){
-
-const snap =
-await getDocs(
-collection(db,"withdrawals")
-);
-
+async function loadWithdraw(){
+const snap=await getDocs(collection(db,"withdrawals"));
 let html="";
-
 snap.forEach(d=>{
-
-const w=d.data();
-
-html += `
-
+let w=d.data();
+html+=`
 <div class="card">
-
-<h3>
-₹${w.amount}
-</h3>
-
-<p>
-User :
-${w.userId}
-</p>
-
-<p>
-UPI :
-${w.upi}
-</p>
-
-<p>
-Status :
-${w.status}
-</p>
-
-<button
-class="action-btn btn-green"
-onclick="
-approveWithdraw(
-'${d.id}',
-'${w.userId}',
-${w.amount}
-)"
->
-Approve
-</button>
-
-<button
-class="action-btn btn-red"
-onclick="
-rejectWithdraw(
-'${d.id}'
-)"
->
-Reject
-</button>
-
-</div>
-
-`;
-
+<p><b>User:</b> ${w.userId}</p>
+<p><b>Amount:</b> ₹${w.amount}</p>
+<p><b>UPI:</b> ${w.upi||"-"}</p>
+<p><b>Status:</b> ${w.status||"pending"}</p>
+<button class="action green" onclick="approveWithdraw('${d.id}','${w.userId}',${Number(w.amount||0)})">Approve</button>
+<button class="action red" onclick="rejectWithdraw('${d.id}')">Reject</button>
+</div>`;
 });
-
-document
-.getElementById("withdrawList")
-.innerHTML = html;
-
+document.getElementById("withdrawList").innerHTML=html||"<div class='card'>No withdraw requests</div>";
 }
 
-/* APPROVE WITHDRAW */
-
-window.approveWithdraw =
-async function(
-id,
-userId,
-amount
-){
-
-await updateDoc(
-doc(db,"withdrawals",id),
-{
-status:"approved"
-}
-);
-
-await updateDoc(
-doc(db,"users",userId),
-{
-balance:
-increment(
--Number(amount)
-)
-}
-);
-
-await addDoc(
-collection(db,"reports"),
-{
-type:"WITHDRAW_APPROVED",
-userId,
-amount,
-status:"success",
-time:Date.now()
-}
-);
-
-alert("Withdraw Approved");
-
-loadWithdraws();
-loadUsers();
-
+window.approveWithdraw=async function(id,userId,amount){
+await updateDoc(doc(db,"withdrawals",id),{status:"approved"});
+await updateDoc(doc(db,"users",userId),{balance:increment(-Number(amount))});
+await addDoc(collection(db,"reports"),{
+type:"WITHDRAW_APPROVED",userId,amount:Number(amount),status:"success",time:Date.now()
+});
+alert("Withdraw approved + balance cut");
+loadWithdraw();loadUsers();loadReports();loadStats();
 };
 
-/* REJECT WITHDRAW */
-
-window.rejectWithdraw =
-async function(id){
-
-await updateDoc(
-doc(db,"withdrawals",id),
-{
-status:"rejected"
-}
-);
-
-await addDoc(
-collection(db,"reports"),
-{
-type:"WITHDRAW_REJECTED",
-withdrawId:id,
-status:"failed",
-time:Date.now()
-}
-);
-
-alert("Withdraw Rejected");
-
-loadWithdraws();
-
+window.rejectWithdraw=async function(id){
+await updateDoc(doc(db,"withdrawals",id),{status:"rejected"});
+await addDoc(collection(db,"reports"),{
+type:"WITHDRAW_REJECTED",withdrawId:id,status:"failed",time:Date.now()
+});
+loadWithdraw();loadReports();loadStats();
 };
-
-/////////////////////////////////////////////////////
-/* REPORTS */
-/////////////////////////////////////////////////////
 
 async function loadReports(){
-
-const snap =
-await getDocs(
-collection(db,"reports")
-);
-
+const snap=await getDocs(collection(db,"reports"));
 let html="";
-
 snap.forEach(d=>{
-
-const r=d.data();
-
-html += `
-
+let r=d.data();
+html+=`
 <div class="card">
-
-<h3>
-${r.type || "REPORT"}
-</h3>
-
-<p>
-User :
-${r.userId || "-"}
-</p>
-
-<p>
-Amount :
-₹${r.amount || 0}
-</p>
-
-<p>
-Status :
-${r.status || "-"}
-</p>
-
-<p>
-Time :
-${new Date(
-r.time || Date.now()
-).toLocaleString()}
-</p>
-
-</div>
-
-`;
-
+<p><b>Type:</b> ${r.type||"REPORT"}</p>
+<p><b>User:</b> ${r.userId||"-"}</p>
+<p><b>Amount:</b> ₹${r.amount||r.payout||0}</p>
+<p><b>Status:</b> ${r.status||"-"}</p>
+<p><b>Time:</b> ${r.time?new Date(r.time).toLocaleString():"-"}</p>
+</div>`;
 });
-
-document
-.getElementById("reportList")
-.innerHTML = html;
-
+document.getElementById("reportList").innerHTML=html||"<div class='card'>No reports</div>";
 }
 
-/////////////////////////////////////////////////////
-/* AUTO REFRESH */
-/////////////////////////////////////////////////////
+async function loadFraud(){
+const snap=await getDocs(collection(db,"fraud_logs"));
+let html="";
+snap.forEach(d=>{
+let f=d.data();
+html+=`
+<div class="card">
+<p><b>User:</b> ${f.userId||"-"}</p>
+<p><b>Reason:</b> ${f.reason||"-"}</p>
+<p><b>Status:</b> ${f.status||"-"}</p>
+<p><b>Time:</b> ${f.time?new Date(f.time).toLocaleString():"-"}</p>
+</div>`;
+});
+document.getElementById("fraudList").innerHTML=html||"<div class='card'>No fraud logs</div>";
+}
 
 function refreshAll(){
-
-loadDashboard();
-
+loadStats();
 loadUsers();
-
 loadCampaigns();
-
 loadApplications();
-
-loadWithdraws();
-
+loadWithdraw();
 loadReports();
-
+loadFraud();
 }
 
-/////////////////////////////////////////////////////
-/* INIT */
-/////////////////////////////////////////////////////
-
 refreshAll();
-
-setInterval(
-refreshAll,
-30000
-);
-
 </script>
 
 </body>
