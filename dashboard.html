@@ -68,6 +68,7 @@ body{background:#f4f6fb;color:#111827;display:flex}
 <button onclick="showSection('withdraw',this)">💰 Wallet</button>
 <button onclick="showSection('history',this)">🧾 History</button>
 <button onclick="showSection('profile',this)">👤 Profile</button>
+<button onclick="showSection('referral',this)">👥 Referral</button>
 <button onclick="logout()">🚪 Logout</button>
 </div>
 </div>
@@ -153,6 +154,28 @@ Get latest offers and updates
 <p><b>Status:</b> Active</p>
 </div>
 
+<div id="referral" class="section">
+<h2>Referral Program</h2><br>
+
+<div class="card">
+<p><b>Your Referral Link</b></p>
+<input id="refLink" readonly>
+<button class="primary-btn" onclick="copyRef()">Copy Referral Link</button>
+</div>
+
+<div class="stats">
+<div class="stat">
+<p>Total Referrals</p>
+<h2 class="blue" id="refCount">0</h2>
+</div>
+
+<div class="stat">
+<p>Referral Earnings</p>
+<h2 class="green">₹<span id="refEarn">0</span></h2>
+</div>
+</div>
+</div>
+
 <div class="card">
 <h3>Support</h3>
 <p>Need help? Join Telegram channel for updates and support.</p>
@@ -207,6 +230,8 @@ const pub="PUB-"+currentUser.uid.slice(0,6).toUpperCase();
 pubid.innerText="ID : "+pub;
 profilePubId.innerText=pub;
 profileEmail.innerText=currentUser.email||"-";
+refLink.value =
+window.location.origin + "/login.html?ref=" + currentUser.uid;
 }
 
 async function loadCampaigns(){
@@ -420,6 +445,14 @@ window.open("https://t.me/effortlessMoneyearning");
 
 window.logout=function(){
 signOut(auth).then(()=>{window.location.href="login.html";});
+};
+
+window.copyRef=function(){
+
+navigator.clipboard.writeText(refLink.value);
+
+alert("Referral link copied");
+
 };
 </script>
 
