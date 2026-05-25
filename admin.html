@@ -338,7 +338,7 @@ loadStats();
 
 /* APPROVALS */
 async function loadApprovals(){
-const snap=await latestWhere("lead_submissions","status","clicked",30);
+const snap=await latestWhere("lead_submissions","status","pending",30);
 let html="";
 
 snap.forEach(d=>{
