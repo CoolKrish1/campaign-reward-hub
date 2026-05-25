@@ -9,18 +9,23 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
 body{background:#0b1220;color:white;display:flex;height:100vh;overflow:hidden}
 .sidebar{width:270px;height:100vh;background:#111827;position:fixed;left:0;top:0;padding:20px;overflow-y:auto;border-right:1px solid #1f2937}
-.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-thumb{background:#3b82f6;border-radius:50px}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:#3b82f6;border-radius:50px}
 .sidebar h2{color:#38bdf8;margin-bottom:18px}
 .menu-title{font-size:12px;font-weight:700;color:#38bdf8;margin:20px 0 8px;letter-spacing:1px}
 .sidebar button{width:100%;padding:13px;margin:6px 0;background:#1f2937;color:white;border:0;border-radius:12px;cursor:pointer;text-align:left}
-.sidebar button:hover{background:#2563eb}
+.sidebar button:hover,.sidebar button.active{background:#2563eb}
 .main{margin-left:270px;width:calc(100% - 270px);height:100vh;padding:25px;overflow-y:auto}
-.section{display:none}.section.active{display:block}
+.section{display:none}
+.section.active{display:block}
 .card{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:15px;margin:12px 0}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
 input,select{width:100%;padding:12px;margin:7px 0;border:0;border-radius:10px;background:#1f2937;color:white}
 button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:pointer}
-.green{background:#16a34a;color:white}.red{background:#dc2626;color:white}.blue{background:#2563eb;color:white}.orange{background:#f97316;color:white}
+.green{background:#16a34a;color:white}
+.red{background:#dc2626;color:white}
+.blue{background:#2563eb;color:white}
+.orange{background:#f97316;color:white}
 .small{color:#94a3b8;font-size:13px}
 </style>
 </head>
@@ -31,30 +36,37 @@ button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:poi
 <h2>⚡ Admin Panel</h2>
 
 <div class="menu-title">SYSTEM</div>
-<button onclick="show('dashboard')">📊 Dashboard</button>
-<button onclick="show('users')">👤 Users</button>
-<button onclick="show('campaigns')">🎯 Campaigns</button>
-<button onclick="show('applications')">📥 Applications</button>
+<button class="active" onclick="show('dashboard',this)">📊 Dashboard</button>
+<button onclick="show('users',this)">👤 Users</button>
+<button onclick="show('campaigns',this)">🎯 Campaigns</button>
+<button onclick="show('applications',this)">📥 Applications</button>
 
 <div class="menu-title">TRACKING</div>
-<button onclick="show('clicks')">🖱 Clicks</button>
-<button onclick="show('reports')">📄 Reports</button>
-<button onclick="show('smartleads')">🧾 Smart Leads</button>
-<button onclick="show('revenue')">💹 Revenue Share</button>
-<button onclick="show('postback')">🔗 Postback</button>
+<button onclick="show('clicks',this)">🖱 Clicks</button>
+<button onclick="show('reports',this)">📄 Reports</button>
+<button onclick="show('smartleads',this)">🧾 Smart Leads</button>
+<button onclick="show('revenue',this)">💹 Revenue Share</button>
+<button onclick="show('postback',this)">🔗 Postback</button>
 
 <div class="menu-title">PAYMENTS</div>
-<button onclick="show('withdraw')">💰 User Withdraw</button>
-<button onclick="show('affwithdraw')">💸 Affiliate Withdraw</button>
+<button onclick="show('withdraw',this)">💰 User Withdraw</button>
+<button onclick="show('affwithdraw',this)">💸 Affiliate Withdraw</button>
 
 <div class="menu-title">SECURITY</div>
-<button onclick="show('fraud')">🛡 Fraud Logs</button>
+<button onclick="show('fraud',this)">🛡 Fraud Logs</button>
 </div>
 
 <div class="main">
 
-<div id="dashboard" class="section active"><h2>Dashboard</h2><div class="grid" id="stats"></div></div>
-<div id="users" class="section"><h2>Users</h2><div id="userList"></div></div>
+<div id="dashboard" class="section active">
+<h2>Dashboard</h2>
+<div class="grid" id="stats"></div>
+</div>
+
+<div id="users" class="section">
+<h2>Users</h2>
+<div id="userList"></div>
+</div>
 
 <div id="campaigns" class="section">
 <h2>Campaign Manager</h2>
@@ -64,7 +76,7 @@ button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:poi
 <input id="reward" type="number" placeholder="Reward">
 <input id="image" placeholder="Image URL optional">
 <input id="category" placeholder="Category optional">
-<input id="offerLink" placeholder="CPA Offer Link, example: https://offer.com/?click_id={trackingId}">
+<input id="offerLink" placeholder="CPA Offer Link with {trackingId}">
 <p class="small">Use {trackingId} in offer link.</p>
 <select id="status">
 <option value="active">Active</option>
@@ -75,19 +87,49 @@ button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:poi
 <div id="campaignList"></div>
 </div>
 
-<div id="applications" class="section"><h2>Applications</h2><div id="appList"></div></div>
-<div id="withdraw" class="section"><h2>User Withdraw Requests</h2><div id="withdrawList"></div></div>
-<div id="reports" class="section"><h2>Reports</h2><div id="reportList"></div></div>
-<div id="fraud" class="section"><h2>Fraud Logs</h2><div id="fraudList"></div></div>
-<div id="clicks" class="section"><h2>Click Tracking</h2><div id="clickList"></div></div>
-<div id="smartleads" class="section"><h2>Smart Leads</h2><div id="smartLeadList"></div></div>
-<div id="revenue" class="section"><h2>Revenue Share</h2><div id="revenueList"></div></div>
-<div id="affwithdraw" class="section"><h2>Affiliate Withdrawals</h2><div id="affWithdrawList"></div></div>
+<div id="applications" class="section">
+<h2>Applications</h2>
+<div id="appList"></div>
+</div>
+
+<div id="withdraw" class="section">
+<h2>User Withdraw Requests</h2>
+<div id="withdrawList"></div>
+</div>
+
+<div id="reports" class="section">
+<h2>Reports</h2>
+<div id="reportList"></div>
+</div>
+
+<div id="fraud" class="section">
+<h2>Fraud Logs</h2>
+<div id="fraudList"></div>
+</div>
+
+<div id="clicks" class="section">
+<h2>Click Tracking</h2>
+<div id="clickList"></div>
+</div>
+
+<div id="smartleads" class="section">
+<h2>Smart Leads</h2>
+<div id="smartLeadList"></div>
+</div>
+
+<div id="revenue" class="section">
+<h2>Revenue Share</h2>
+<div id="revenueList"></div>
+</div>
+
+<div id="affwithdraw" class="section">
+<h2>Affiliate Withdrawals</h2>
+<div id="affWithdrawList"></div>
+</div>
 
 <div id="postback" class="section">
 <h2>Postback URL</h2>
 <div class="card">
-<p><b>Your Postback URL:</b></p>
 <input id="postbackUrl" readonly value="https://campaign-reward-hub.vercel.app/api/postback?trackingId={click_id}&payout={payout}&status=approved">
 <button class="action blue" onclick="copyPostback()">Copy Postback</button>
 </div>
@@ -99,7 +141,8 @@ button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:poi
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import {
-getFirestore,collection,getDocs,doc,updateDoc,increment,addDoc,deleteDoc,getDoc
+getFirestore,collection,getDocs,doc,getDoc,updateDoc,increment,addDoc,deleteDoc,
+query,orderBy,limit,getCountFromServer
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig={
@@ -116,35 +159,78 @@ const db=getFirestore(app);
 const auth=getAuth(app);
 const el=id=>document.getElementById(id);
 
-let loadedSections={};
+let loaded={};
+let isAdmin=false;
 
-window.show=function(id){
-document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-el(id).classList.add("active");
-loadSection(id);
-};
+onAuthStateChanged(auth,async user=>{
+if(!user){
+location.href="login.html";
+return;
+}
 
-onAuthStateChanged(auth,async(user)=>{
-if(!user){location.href="login.html";return;}
 const snap=await getDoc(doc(db,"users",user.uid));
-if(!snap.exists() || snap.data().role!=="admin"){
+
+if(!snap.exists()||snap.data().role!=="admin"){
 alert("Access denied");
 location.href="dashboard.html";
 return;
 }
+
+isAdmin=true;
 loadStats();
-loadSection("dashboard");
 });
 
-async function safeGet(name){
-try{return await getDocs(collection(db,name));}
-catch(e){console.log(name,e);return {size:0,forEach:()=>{}};}
+async function countCol(name){
+try{
+const snap=await getCountFromServer(collection(db,name));
+return snap.data().count||0;
+}catch(e){
+console.log(e);
+return 0;
+}
 }
 
+async function latestDocs(name,max=50){
+try{
+return await getDocs(
+query(
+collection(db,name),
+orderBy("time","desc"),
+limit(max)
+)
+);
+}catch(e){
+return await getDocs(
+query(
+collection(db,name),
+limit(max)
+)
+);
+}
+}
+
+window.show=function(id,btn){
+document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+document.querySelectorAll(".sidebar button").forEach(b=>b.classList.remove("active"));
+
+el(id).classList.add("active");
+
+if(btn)btn.classList.add("active");
+
+loadSection(id);
+};
+
 async function loadSection(id){
-if(id==="dashboard"){loadStats();return;}
-if(loadedSections[id])return;
-loadedSections[id]=true;
+if(!isAdmin)return;
+
+if(id==="dashboard"){
+loadStats();
+return;
+}
+
+if(loaded[id])return;
+
+loaded[id]=true;
 
 if(id==="users")loadUsers();
 if(id==="campaigns")loadCampaigns();
@@ -158,87 +244,95 @@ if(id==="revenue")loadRevenueShare();
 if(id==="affwithdraw")loadAffiliateWithdrawals();
 }
 
-function resetSection(id){loadedSections[id]=false;loadSection(id);}
+function reload(id){
+loaded[id]=false;
+loadSection(id);
+}
 
 async function loadStats(){
-const users=await safeGet("users");
-const campaigns=await safeGet("campaigns");
-const apps=await safeGet("applications");
-const withdraws=await safeGet("withdrawals");
-const reports=await safeGet("reports");
-const clicks=await safeGet("clicks");
-const leads=await safeGet("lead_submissions");
-const revenue=await safeGet("revenue_share");
-const affWithdraw=await safeGet("affiliate_withdrawals");
-
-let pendingWithdraw=0,totalPayout=0,totalProfit=0,totalCommission=0;
-
-withdraws.forEach(d=>{
-const w=d.data();
-if(w.status==="pending")pendingWithdraw++;
-if(w.status==="approved")totalPayout+=Number(w.amount||0);
-});
-
-revenue.forEach(d=>{
-const r=d.data();
-totalProfit+=Number(r.profit||0);
-totalCommission+=Number(r.affiliateCommission||0);
-});
+const users=await countCol("users");
+const campaigns=await countCol("campaigns");
+const apps=await countCol("applications");
+const withdraws=await countCol("withdrawals");
+const reports=await countCol("reports");
+const clicks=await countCol("clicks");
+const leads=await countCol("lead_submissions");
+const aff=await countCol("affiliate_withdrawals");
 
 el("stats").innerHTML=`
-<div class="card"><h3>Users</h3><h1>${users.size}</h1></div>
-<div class="card"><h3>Campaigns</h3><h1>${campaigns.size}</h1></div>
-<div class="card"><h3>Applications</h3><h1>${apps.size}</h1></div>
-<div class="card"><h3>User Withdraw</h3><h1>${withdraws.size}</h1></div>
-<div class="card"><h3>Affiliate Withdraw</h3><h1>${affWithdraw.size}</h1></div>
-<div class="card"><h3>Pending Withdraw</h3><h1>${pendingWithdraw}</h1></div>
-<div class="card"><h3>Total Payout</h3><h1>₹${totalPayout}</h1></div>
-<div class="card"><h3>Reports</h3><h1>${reports.size}</h1></div>
-<div class="card"><h3>Clicks</h3><h1>${clicks.size}</h1></div>
-<div class="card"><h3>Smart Leads</h3><h1>${leads.size}</h1></div>
-<div class="card"><h3>Affiliate Commission</h3><h1>₹${totalCommission}</h1></div>
-<div class="card"><h3>Your Profit</h3><h1>₹${totalProfit}</h1></div>`;
+<div class="card"><h3>Users</h3><h1>${users}</h1></div>
+<div class="card"><h3>Campaigns</h3><h1>${campaigns}</h1></div>
+<div class="card"><h3>Applications</h3><h1>${apps}</h1></div>
+<div class="card"><h3>User Withdraw</h3><h1>${withdraws}</h1></div>
+<div class="card"><h3>Affiliate Withdraw</h3><h1>${aff}</h1></div>
+<div class="card"><h3>Reports</h3><h1>${reports}</h1></div>
+<div class="card"><h3>Clicks</h3><h1>${clicks}</h1></div>
+<div class="card"><h3>Smart Leads</h3><h1>${leads}</h1></div>
+`;
 }
 
 async function loadUsers(){
-const snap=await safeGet("users");
+const snap=await latestDocs("users",50);
 let html="";
+
 snap.forEach(d=>{
 const u=d.data();
-html+=`<div class="card">
+
+html+=`
+<div class="card">
 <p><b>UID:</b> ${d.id}</p>
 <p><b>Email:</b> ${u.email||"-"}</p>
 <p><b>Balance:</b> ₹${u.balance||0}</p>
 <p><b>Role:</b> ${u.role||"user"}</p>
 <p><b>Status:</b> ${u.status||"active"}</p>
+
 <button class="action green" onclick="addBalance('${d.id}')">Add Balance</button>
 <button class="action orange" onclick="cutBalance('${d.id}')">Cut Balance</button>
 <button class="action red" onclick="banUser('${d.id}')">Ban</button>
 </div>`;
 });
+
 el("userList").innerHTML=html||"<div class='card'>No users</div>";
 }
 
 window.addBalance=async uid=>{
 const amount=Number(prompt("Amount add karo"));
 if(!amount)return;
-await updateDoc(doc(db,"users",uid),{balance:increment(amount)});
-await addDoc(collection(db,"reports"),{type:"BALANCE_ADDED",userId:uid,amount,status:"success",time:Date.now()});
-resetSection("users");loadStats();
+
+await updateDoc(doc(db,"users",uid),{
+balance:increment(amount)
+});
+
+reload("users");
+loadStats();
 };
 
 window.cutBalance=async uid=>{
 const amount=Number(prompt("Amount cut karo"));
 if(!amount)return;
-await updateDoc(doc(db,"users",uid),{balance:increment(-amount)});
-await addDoc(collection(db,"reports"),{type:"BALANCE_CUT",userId:uid,amount,status:"success",time:Date.now()});
-resetSection("users");loadStats();
+
+await updateDoc(doc(db,"users",uid),{
+balance:increment(-amount)
+});
+
+reload("users");
+loadStats();
 };
 
 window.banUser=async uid=>{
-await updateDoc(doc(db,"users",uid),{status:"banned"});
-await addDoc(collection(db,"fraud_logs"),{userId:uid,reason:"Manual ban by admin",status:"flagged",time:Date.now()});
-resetSection("users");resetSection("fraud");
+await updateDoc(doc(db,"users",uid),{
+status:"banned"
+});
+
+await addDoc(collection(db,"fraud_logs"),{
+userId:uid,
+reason:"Manual ban by admin",
+status:"flagged",
+time:Date.now()
+});
+
+reload("users");
+loaded.fraud=false;
 };
 
 window.addCampaign=async()=>{
@@ -249,104 +343,176 @@ const category=el("category").value.trim();
 const offerLink=el("offerLink").value.trim();
 const status=el("status").value;
 
-if(!title||!reward){alert("Title aur reward required hai");return;}
+if(!title||!reward){
+alert("Title aur reward required hai");
+return;
+}
 
-await addDoc(collection(db,"campaigns"),{title,reward,image,category,offerLink,status,time:Date.now()});
+await addDoc(collection(db,"campaigns"),{
+title,reward,image,category,offerLink,status,time:Date.now()
+});
+
 ["title","reward","image","category","offerLink"].forEach(id=>el(id).value="");
+
 alert("Campaign added");
-resetSection("campaigns");loadStats();
+
+reload("campaigns");
+loadStats();
 };
 
 async function loadCampaigns(){
-const snap=await safeGet("campaigns");
+const snap=await latestDocs("campaigns",50);
 let html="";
+
 snap.forEach(d=>{
 const c=d.data();
-html+=`<div class="card">
+
+html+=`
+<div class="card">
 <h3>${c.title||"-"}</h3>
 <p><b>Reward:</b> ₹${c.reward||0}</p>
 <p><b>Category:</b> ${c.category||"-"}</p>
 <p><b>Status:</b> ${c.status||"active"}</p>
 <p><b>Offer Link:</b> ${c.offerLink||"-"}</p>
+
 <button class="action green" onclick="activateCampaign('${d.id}')">Active</button>
 <button class="action orange" onclick="pauseCampaign('${d.id}')">Pause</button>
 <button class="action red" onclick="deleteCampaign('${d.id}')">Delete</button>
 </div>`;
 });
+
 el("campaignList").innerHTML=html||"<div class='card'>No campaigns</div>";
 }
 
-window.activateCampaign=async id=>{await updateDoc(doc(db,"campaigns",id),{status:"active"});resetSection("campaigns");};
-window.pauseCampaign=async id=>{await updateDoc(doc(db,"campaigns",id),{status:"paused"});resetSection("campaigns");};
-window.deleteCampaign=async id=>{if(confirm("Delete campaign?")){await deleteDoc(doc(db,"campaigns",id));resetSection("campaigns");loadStats();}};
+window.activateCampaign=async id=>{
+await updateDoc(doc(db,"campaigns",id),{status:"active"});
+reload("campaigns");
+};
+
+window.pauseCampaign=async id=>{
+await updateDoc(doc(db,"campaigns",id),{status:"paused"});
+reload("campaigns");
+};
+
+window.deleteCampaign=async id=>{
+if(!confirm("Delete campaign?"))return;
+
+await deleteDoc(doc(db,"campaigns",id));
+
+reload("campaigns");
+loadStats();
+};
 
 async function loadApplications(){
-const snap=await safeGet("applications");
+const snap=await latestDocs("applications",50);
 let html="";
+
 snap.forEach(d=>{
 const a=d.data();
-html+=`<div class="card">
+
+html+=`
+<div class="card">
 <p><b>User:</b> ${a.userId||"-"}</p>
 <p><b>Campaign:</b> ${a.campaignTitle||a.campaignId||"-"}</p>
 <p><b>Reward:</b> ₹${a.reward||0}</p>
 <p><b>Status:</b> ${a.status||"pending"}</p>
 <p><b>Tracking:</b> ${a.trackingId||"-"}</p>
+
 <button class="action green" onclick="approveApp('${d.id}','${a.userId}',${Number(a.reward||0)})">Approve</button>
 <button class="action red" onclick="rejectApp('${d.id}')">Reject</button>
 </div>`;
 });
+
 el("appList").innerHTML=html||"<div class='card'>No applications</div>";
 }
 
 window.approveApp=async(id,userId,reward)=>{
-await updateDoc(doc(db,"applications",id),{status:"approved"});
-if(userId)await updateDoc(doc(db,"users",userId),{balance:increment(reward)});
-await addDoc(collection(db,"reports"),{type:"APPLICATION_APPROVED",userId,amount:reward,status:"success",time:Date.now()});
-resetSection("applications");loadStats();
+await updateDoc(doc(db,"applications",id),{
+status:"approved"
+});
+
+if(userId){
+await updateDoc(doc(db,"users",userId),{
+balance:increment(reward)
+});
+}
+
+await addDoc(collection(db,"reports"),{
+type:"APPLICATION_APPROVED",
+userId,
+amount:reward,
+status:"success",
+time:Date.now()
+});
+
+reload("applications");
+loadStats();
 };
 
 window.rejectApp=async id=>{
-await updateDoc(doc(db,"applications",id),{status:"rejected"});
-await addDoc(collection(db,"reports"),{type:"APPLICATION_REJECTED",appId:id,status:"failed",time:Date.now()});
-resetSection("applications");loadStats();
+await updateDoc(doc(db,"applications",id),{
+status:"rejected"
+});
+
+reload("applications");
+loadStats();
 };
 
 async function loadWithdraw(){
-const snap=await safeGet("withdrawals");
+const snap=await latestDocs("withdrawals",50);
 let html="";
+
 snap.forEach(d=>{
 const w=d.data();
-html+=`<div class="card">
+
+html+=`
+<div class="card">
 <p><b>User:</b> ${w.userId||"-"}</p>
 <p><b>Amount:</b> ₹${w.amount||0}</p>
 <p><b>UPI:</b> ${w.upi||"-"}</p>
 <p><b>Status:</b> ${w.status||"pending"}</p>
+
 <button class="action green" onclick="approveWithdraw('${d.id}','${w.userId}',${Number(w.amount||0)})">Approve</button>
 <button class="action red" onclick="rejectWithdraw('${d.id}')">Reject</button>
 </div>`;
 });
+
 el("withdrawList").innerHTML=html||"<div class='card'>No withdraw requests</div>";
 }
 
 window.approveWithdraw=async(id,userId,amount)=>{
-await updateDoc(doc(db,"withdrawals",id),{status:"approved"});
-if(userId)await updateDoc(doc(db,"users",userId),{balance:increment(-amount)});
-await addDoc(collection(db,"reports"),{type:"WITHDRAW_APPROVED",userId,amount,status:"success",time:Date.now()});
-resetSection("withdraw");loadStats();
+await updateDoc(doc(db,"withdrawals",id),{
+status:"approved"
+});
+
+if(userId){
+await updateDoc(doc(db,"users",userId),{
+balance:increment(-amount)
+});
+}
+
+reload("withdraw");
+loadStats();
 };
 
 window.rejectWithdraw=async id=>{
-await updateDoc(doc(db,"withdrawals",id),{status:"rejected"});
-await addDoc(collection(db,"reports"),{type:"WITHDRAW_REJECTED",withdrawId:id,status:"failed",time:Date.now()});
-resetSection("withdraw");loadStats();
+await updateDoc(doc(db,"withdrawals",id),{
+status:"rejected"
+});
+
+reload("withdraw");
+loadStats();
 };
 
 async function loadReports(){
-const snap=await safeGet("reports");
+const snap=await latestDocs("reports",50);
 let html="";
+
 snap.forEach(d=>{
 const r=d.data();
-html+=`<div class="card">
+
+html+=`
+<div class="card">
 <p><b>Type:</b> ${r.type||"REPORT"}</p>
 <p><b>User:</b> ${r.userId||"-"}</p>
 <p><b>Amount:</b> ₹${r.amount||r.payout||0}</p>
@@ -354,30 +520,38 @@ html+=`<div class="card">
 <p><b>Time:</b> ${r.time?new Date(r.time).toLocaleString():"-"}</p>
 </div>`;
 });
+
 el("reportList").innerHTML=html||"<div class='card'>No reports</div>";
 }
 
 async function loadFraud(){
-const snap=await safeGet("fraud_logs");
+const snap=await latestDocs("fraud_logs",50);
 let html="";
+
 snap.forEach(d=>{
 const f=d.data();
-html+=`<div class="card">
+
+html+=`
+<div class="card">
 <p><b>User:</b> ${f.userId||"-"}</p>
 <p><b>Reason:</b> ${f.reason||"-"}</p>
 <p><b>Status:</b> ${f.status||"-"}</p>
 <p><b>Time:</b> ${f.time?new Date(f.time).toLocaleString():"-"}</p>
 </div>`;
 });
+
 el("fraudList").innerHTML=html||"<div class='card'>No fraud logs</div>";
 }
 
 async function loadClicks(){
-const snap=await safeGet("clicks");
+const snap=await latestDocs("clicks",50);
 let html="";
+
 snap.forEach(d=>{
 const c=d.data();
-html+=`<div class="card">
+
+html+=`
+<div class="card">
 <p><b>User:</b> ${c.userId||"-"}</p>
 <p><b>Campaign:</b> ${c.campaignTitle||"-"}</p>
 <p><b>Reward:</b> ₹${c.reward||0}</p>
@@ -385,15 +559,19 @@ html+=`<div class="card">
 <p><b>Time:</b> ${c.time?new Date(c.time).toLocaleString():"-"}</p>
 </div>`;
 });
+
 el("clickList").innerHTML=html||"<div class='card'>No clicks yet</div>";
 }
 
 async function loadSmartLeads(){
-const snap=await safeGet("lead_submissions");
+const snap=await latestDocs("lead_submissions",50);
 let html="";
+
 snap.forEach(d=>{
 const l=d.data();
-html+=`<div class="card">
+
+html+=`
+<div class="card">
 <p><b>Campaign:</b> ${l.title||"-"}</p>
 <p><b>UPI:</b> ${l.upi||"-"}</p>
 <p><b>Tracking:</b> ${l.trackingId||"-"}</p>
@@ -404,15 +582,19 @@ html+=`<div class="card">
 <p><b>Time:</b> ${l.time?new Date(l.time).toLocaleString():"-"}</p>
 </div>`;
 });
+
 el("smartLeadList").innerHTML=html||"<div class='card'>No smart leads</div>";
 }
 
 async function loadRevenueShare(){
-const snap=await safeGet("revenue_share");
+const snap=await latestDocs("revenue_share",50);
 let html="";
+
 snap.forEach(d=>{
 const r=d.data();
-html+=`<div class="card">
+
+html+=`
+<div class="card">
 <p><b>Tracking:</b> ${r.trackingId||"-"}</p>
 <p><b>Campaign:</b> ${r.campaignId||"-"}</p>
 <p><b>Publisher:</b> ${r.publisherId||"-"}</p>
@@ -424,41 +606,58 @@ html+=`<div class="card">
 <p><b>Time:</b> ${r.time?new Date(r.time).toLocaleString():"-"}</p>
 </div>`;
 });
+
 el("revenueList").innerHTML=html||"<div class='card'>No revenue share data</div>";
 }
 
 async function loadAffiliateWithdrawals(){
-const snap=await safeGet("affiliate_withdrawals");
+const snap=await latestDocs("affiliate_withdrawals",50);
 let html="";
+
 snap.forEach(d=>{
 const w=d.data();
-html+=`<div class="card">
+
+html+=`
+<div class="card">
 <p><b>Publisher:</b> ${w.publisherId||"-"}</p>
 <p><b>Amount:</b> ₹${w.amount||0}</p>
 <p><b>UPI:</b> ${w.upi||"-"}</p>
 <p><b>Status:</b> ${w.status||"pending"}</p>
 <p><b>Time:</b> ${w.time?new Date(w.time).toLocaleString():"-"}</p>
+
 <button class="action green" onclick="markAffiliatePaid('${d.id}')">Mark Paid</button>
 <button class="action red" onclick="rejectAffiliateWithdraw('${d.id}')">Reject</button>
 </div>`;
 });
+
 el("affWithdrawList").innerHTML=html||"<div class='card'>No affiliate withdrawals</div>";
 }
 
 window.markAffiliatePaid=async id=>{
-await updateDoc(doc(db,"affiliate_withdrawals",id),{status:"paid",paidAt:Date.now()});
-resetSection("affwithdraw");loadStats();
+await updateDoc(doc(db,"affiliate_withdrawals",id),{
+status:"paid",
+paidAt:Date.now()
+});
+
+reload("affwithdraw");
+loadStats();
 };
 
 window.rejectAffiliateWithdraw=async id=>{
-await updateDoc(doc(db,"affiliate_withdrawals",id),{status:"rejected"});
-resetSection("affwithdraw");loadStats();
+await updateDoc(doc(db,"affiliate_withdrawals",id),{
+status:"rejected"
+});
+
+reload("affwithdraw");
+loadStats();
 };
 
 window.copyPostback=()=>{
 navigator.clipboard.writeText(el("postbackUrl").value);
 alert("Postback copied");
 };
+
 </script>
+
 </body>
 </html>
