@@ -411,7 +411,13 @@ el("refLink").value=window.location.origin+"/login.html?ref="+currentUser.uid;
 }
 
 async function loadCampaigns(){
-const snap=await getDocs(collection(db,"campaigns"));
+const snap=await getDocs(
+query(
+collection(db,"campaigns"),
+where("status","==","active"),
+limit(50)
+)
+);
 let html="";
 campaignCache={};
 
@@ -808,7 +814,12 @@ await loadReports();
 };
 
 async function loadWithdrawHistory(){
-const q=query(collection(db,"withdrawals"),where("userId","==",currentUser.uid));
+const q=query(
+collection(db,"withdrawals"),
+where("userId","==",currentUser.uid),
+orderBy("time","desc"),
+limit(20)
+);
 const snap=await getDocs(q);
 let html="";
 
@@ -925,7 +936,12 @@ await loadSmartLinks();
 };
 
 async function loadSmartLinks(){
-const q=query(collection(db,"smart_links"),where("publisherId","==",currentUser.uid));
+const q=query(
+collection(db,"smart_links"),
+where("publisherId","==",currentUser.uid),
+orderBy("time","desc"),
+limit(20)
+);
 const snap=await getDocs(q);
 let html="";
 
