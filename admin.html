@@ -120,7 +120,12 @@ overflow-y:auto;
 input,select{width:100%;padding:12px;margin:7px 0;border:0;border-radius:10px;background:#1f2937;color:white}
 button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:pointer}
 .green{background:#16a34a;color:white}.red{background:#dc2626;color:white}.blue{background:#2563eb;color:white}.orange{background:#f97316;color:white}
-.small{color:#94a3b8;font-size:13px}
+.small{
+color:#94a3b8;
+font-size:13px;
+}
+
+/* TABLET + MOBILE FIX */
 
 @media(max-width:900px){
 
@@ -131,25 +136,36 @@ overflow:auto;
 
 .sidebar{
 position:relative;
+
 width:100%;
+
 height:auto;
-max-height:none;
+
 overflow:visible;
 }
 
 .sidebar-scroll{
-height:auto;
-overflow:visible;
-}
 
-.main{
-margin-left:0;
-width:100%;
-min-height:auto;
+height:auto;
+
+overflow:visible;
+
 padding:15px;
 }
 
+.main{
+
+margin-left:0;
+
+width:100%;
+
+padding:15px;
+
+min-height:auto;
 }
+
+}
+
 </style>
 </head>
 
