@@ -37,6 +37,7 @@ button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:poi
 <button onclick="show('smartleads')">🧾 Smart Leads</button>
 <button onclick="show('revenue')">💹 Revenue Share</button>
 <button onclick="show('postback')">🔗 Postback</button>
+<button onclick="show('affwithdraw')">💸 Affiliate Withdraw</button>
 </div>
 
 <div class="main">
@@ -70,6 +71,11 @@ button.action{padding:10px 14px;margin:5px;border:0;border-radius:8px;cursor:poi
 <div id="clicks" class="section"><h2>Click Tracking</h2><div id="clickList"></div></div>
 <div id="smartleads" class="section"><h2>Smart Leads</h2><div id="smartLeadList"></div></div>
 <div id="revenue" class="section"><h2>Revenue Share</h2><div id="revenueList"></div></div>
+
+<div id="affwithdraw" class="section">
+<h2>Affiliate Withdrawals</h2>
+<div id="affWithdrawList"></div>
+</div>
 
 <div id="postback" class="section">
 <h2>Postback URL</h2>
@@ -316,6 +322,89 @@ html+=`<div class="card">
 el("clickList").innerHTML=html||"<div class='card'>No clicks yet</div>";
 }
 
+async function loadAffiliateWithdrawals(){
+const snap=await getDocs(collection(db,"affiliate_withdrawals"));
+let html="";
+
+snap.forEach(d=>{
+const w=d.data();
+
+html+=`
+<div class="card">
+<p><b>Publisher:</b> ${w.publisherId||"-"}</p>
+<p><b>Amount:</b> ₹${w.amount||0}</p>
+<p><b>UPI:</b> ${w.upi||"-"}</p>
+<p><b>Status:</b> ${w.status||"pending"}</p>
+<p><b>Time:</b> ${w.time?new Date(w.time).toLocaleString():"-"}</p>
+
+<button class="action green" onclick="markAffiliatePaid('${d.id}')">
+Mark Paid
+</button>
+
+<button class="action red" onclick="rejectAffiliateWithdraw('${d.id}')">
+Reject
+</button>
+</div>`;
+});
+
+el("affWithdrawList").innerHTML=
+html||"<div class='card'>No affiliate withdrawals</div>";
+}
+
+window.markAffiliatePaid=async function(id){
+await updateDoc(doc(db,"affiliate_withdrawals",id),{
+status:"paid",
+paidAt:Date.now()
+});
+alert("Marked paid");
+loadAffiliateWithdrawals();
+};
+
+window.rejectAffiliateWithdraw=async function(id){
+await updateDoc(doc(db,"affiliate_withdrawals",id),{
+status:"rejected"
+});
+alert("Rejected");
+loadAffiliateWithdrawals();
+};
+
+window.markAffiliatePaid=
+async function(id){
+
+await updateDoc(
+doc(
+db,
+"affiliate_withdrawals",
+id
+),
+{
+status:"paid",
+paidAt:Date.now()
+}
+);
+
+loadAffiliateWithdrawals();
+
+};
+
+window.rejectAffiliateWithdraw=
+async function(id){
+
+await updateDoc(
+doc(
+db,
+"affiliate_withdrawals",
+id
+),
+{
+status:"rejected"
+}
+);
+
+loadAffiliateWithdrawals();
+
+};
+
 async function loadSmartLeads(){
 const snap=await getDocs(collection(db,"lead_submissions"));
 let html="";
@@ -371,6 +460,7 @@ loadWithdraw();
 loadReports();
 loadFraud();
 loadClicks();
+loadAffiliateWithdrawals();
 loadSmartLeads();
 loadRevenueShare();
 }
