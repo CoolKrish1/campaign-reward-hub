@@ -399,12 +399,10 @@ return;
 currentUser=user;
 
 await loadWallet();
-
 await loadCampaigns();
-
 await loadHistory();
-
 await loadClicks();
+await loadReports();
 
 });
   
@@ -852,27 +850,25 @@ el("withdrawList").innerHTML=html||"<div class='card'>No withdraw requests.</div
 window.showSection=function(id,btn){
 
 document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-
 el(id).classList.add("active");
 
 document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
-
 if(btn)btn.classList.add("active");
 
+if(id==="dashboard"){
+loadWallet();
+loadHistory();
+loadClicks();
+loadReports();
+}
+
 if(id==="reports") loadReports();
-
 if(id==="withdraw") loadWithdrawHistory();
-
 if(id==="history") loadHistory();
 
 if(id==="smartlinks"){
 loadSmartCampaignOptions();
 loadSmartLinks();
-}
-
-if(id==="dashboard"){
-loadWallet();
-loadClicks();
 }
 
 };
