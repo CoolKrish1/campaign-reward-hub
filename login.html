@@ -1,84 +1,139 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Login</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#111827;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.box{
+background:white;
+padding:30px;
+border-radius:20px;
+width:350px;
+}
+
+input{
+width:100%;
+padding:14px;
+margin-top:10px;
+margin-bottom:12px;
+border:1px solid #ddd;
+border-radius:10px;
+}
+
+button{
+width:100%;
+padding:14px;
+background:black;
+color:white;
+border:none;
+border-radius:10px;
+}
+
+a{
+display:block;
+margin-top:15px;
+text-align:center;
+}
+
+</style>
+
 </head>
 
 <body>
 
+<div class="box">
+
 <h2>Login</h2>
 
-<input id="email" placeholder="Email"><br><br>
-<input id="password" type="password" placeholder="Password"><br><br>
+<input
+id="email"
+placeholder="Email"
+>
 
-<button onclick="login()">Login</button>
-<button onclick="register()">Register</button>
+<input
+id="password"
+type="password"
+placeholder="Password"
+>
 
-<p id="msg"></p>
+<button
+onclick="login()"
+>
+
+LOGIN
+
+</button>
+
+<a href="register.html">
+
+Create Account
+
+</a>
+
+</div>
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { auth }
 
-import { getFirestore, doc, setDoc, getDoc } 
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+from "./firebase.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDxdJ6f2WtbfIzjBjQDybxCSYYYEkTgc0E",
-  authDomain: "effortless-earn-7f39e.firebaseapp.com",
-  projectId: "effortless-earn-7f39e",
-  storageBucket: "effortless-earn-7f39e.appspot.com",
-  messagingSenderId: "554178513766",
-  appId: "1:554178513766:web:d8d7edf915a95349cb16a7"
-};
+import {
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+signInWithEmailAndPassword
 
-/* REGISTER */
-window.register = async function(){
-
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
-
-const userCred = await createUserWithEmailAndPassword(auth,email,password);
-
-await setDoc(doc(db,"users",userCred.user.uid),{
-  email,
-  role:"user",
-  balance:0
-});
-
-document.getElementById("msg").innerText="Registered";
-};
-
-/* LOGIN */
-window.login = async function(){
-
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
-
-const userCred = await signInWithEmailAndPassword(auth,email,password);
-
-const snap = await getDoc(doc(db,"users",userCred.user.uid));
-
-if(!snap.exists()){
-  document.getElementById("msg").innerText="User not found";
-  return;
 }
 
-const role = snap.data().role;
+from
 
-if(role === "admin"){
-  window.location.href="admin.html";
-}else{
-  window.location.href="dashboard.html";
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+window.login=
+async()=>{
+
+try{
+
+await signInWithEmailAndPassword(
+
+auth,
+
+email.value,
+
+password.value
+
+);
+
+alert(
+"Login Success"
+);
+
+location.href=
+"index.html";
+
 }
 
-};
+catch(e){
+
+alert(
+e.message
+);
+
+}
+
+}
 
 </script>
 
