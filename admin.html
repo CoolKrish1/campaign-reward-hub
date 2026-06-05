@@ -14,20 +14,42 @@ function fileToDataUrl(file){
     r.readAsDataURL(file);
   });
 }
+function compressImage(file, maxSize=520, quality=.72){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const scale=Math.min(1,maxSize/Math.max(img.width,img.height));
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.max(1,Math.round(img.width*scale));
+      canvas.height=Math.max(1,Math.round(img.height*scale));
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Image read failed'))};
+    img.src=url;
+  });
+}
 async function uploadCampaignImage(file){
   if(!file) return '';
-  // First try Firebase Storage. If Storage rules block upload, still create campaign using small base64 fallback.
+  // Reliable mode: compress in browser and store as Data URL, so Firebase Storage rules cannot block campaign creation.
+  try{
+    const dataUrl=await compressImage(file);
+    toast('Image added');
+    return dataUrl;
+  }catch(e){
+    console.warn('Image compression failed:',e?.message||e);
+  }
+  // Optional fallback: try Storage only if compression failed. Campaign will still save without image if this fails.
   try{
     const r=ref(storage,'campaigns/'+Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_'));
     await uploadBytes(r,file);
     return await getDownloadURL(r);
   }catch(e){
-    console.warn('Storage upload failed, using fallback:', e?.message||e);
-    if(file.size <= 650000){
-      toast('Image saved locally');
-      return await fileToDataUrl(file);
-    }
-    toast('Image too large. Campaign saved without image. Use Image URL.');
+    console.warn('Storage upload failed:', e?.message||e);
+    toast('Image skipped. Campaign saved.');
     return '';
   }
 }

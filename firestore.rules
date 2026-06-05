@@ -1,8 +1,50 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function loggedIn() { return request.auth != null; }
+
+    match /campaigns/{id} {
+      allow read: if true;
+      allow write: if loggedIn();
+    }
+
+    match /smart_links/{id} {
+      allow read: if true;
+      allow write: if loggedIn();
+    }
+
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if loggedIn();
+    }
+
+    match /click_logs/{id} {
+      allow create: if true;
+      allow read, update, delete: if loggedIn();
+    }
+    match /clicks/{id} {
+      allow create: if true;
+      allow read, update, delete: if loggedIn();
+    }
+
+    match /lead_submissions/{id} {
+      allow create: if true;
+      allow read, update, delete: if loggedIn();
+    }
+    match /submissions/{id} {
+      allow create: if true;
+      allow read, update, delete: if loggedIn();
+    }
+
+    match /users/{uid} {
+      allow read, write: if loggedIn();
+    }
+    match /withdrawals/{id} { allow read, write: if loggedIn(); }
+    match /withdraws/{id} { allow read, write: if loggedIn(); }
+    match /support/{id} { allow read, write: if loggedIn(); }
+
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if loggedIn();
     }
   }
 }

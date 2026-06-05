@@ -1,13 +1,61 @@
 <!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Task Portal</title><link rel="stylesheet" href="style.css"></head><body><div id="root"></div><script type="module">
 import {db} from './firebase.js';
-import {doc,getDoc,collection,addDoc} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import {doc,getDoc,collection,addDoc,getDocs} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const safe=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
 const money=n=>Number(n||0).toLocaleString('en-IN');
 const PLACEHOLDER='data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" rx="24" fill="%23eef4ff"/><text x="60" y="68" font-size="14" font-family="Arial" fill="%232f6df6" text-anchor="middle" font-weight="700">OFFER</text></svg>`);
 const imgSrc=d=>String(d?.image||d?.imageUrl||d?.logo||d?.photo||'').trim()||PLACEHOLDER;
-function goals(c){let g=Array.isArray(c.goals)?c.goals:[]; if(!g.length)g=[{name:'Task Complete',userReward:c.userReward||c.reward||0,maxPayout:c.reward||0}]; return g;}
-let qs=new URLSearchParams(location.search), id=qs.get('id'), pub=qs.get('pub')||'', slug=qs.get('slug')||'';
-let snap=id?await getDoc(doc(db,'campaigns',id)):null;let d=snap?.exists()?snap.data():null;
-if(!d){location.href='index.html'}else{let gs=goals(d), total=gs.reduce((a,g)=>a+Number(g.userReward||g.reward||0),0)||gs.reduce((a,g)=>a+Number(g.maxPayout||0),0);root.innerHTML=`<div class="landing"><div class="task-card"><div class="task-head"><img src="${safe(imgSrc(d))}" onerror="this.onerror=null;this.src=PLACEHOLDER" style="width:76px;height:76px;border-radius:18px;object-fit:cover"><div><h2>${safe(d.title||'Campaign')}</h2><b class="greenText">VERIFIED TASK PORTAL</b></div></div><div class="cash"><div class="mini">Total Assured Cashback</div><h1>₹${money(total)}</h1></div><div class="task-body"><h3>Payout Breakdown</h3>${gs.map(g=>`<div class="goalrow"><span>↳ ${safe(g.name)}</span><b>₹${money(g.userReward||g.reward||0)}</b></div>`).join('')}<label class="mini">UPI ID for Cashback</label><input id="upi" class="field" placeholder="example@upi"><button type="button" class="btn green full" onclick="startTask()">Confirm & Start Task ✨</button><div class="notice" style="margin-top:24px"><b>Steps To Follow</b><p>${safe(d.instructions||d.steps||'Complete task properly.').replaceAll('\n','<br>')}</p></div><div class="notice"><b>Important Notice</b><p>One IP/device is allowed once. Wrong UPI or duplicate task can be rejected.</p></div></div></div></div>`}
-window.startTask=async()=>{await addDoc(collection(db,'click_logs'),{campaignId:id,publisherId:pub,slug,upi:upi.value,time:Date.now(),status:'clicked',source:'campaign',userAgent:navigator.userAgent});let url=d.destinationUrl||d.url||d.offerUrl||''; if(url) location.href=url; else alert('Destination URL not set')};
+const qs=new URLSearchParams(location.search);
+const id=qs.get('id')||'';
+const pub=qs.get('pub')||'';
+const slug=qs.get('slug')||'';
+const clickId='clk_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+function goals(c){let g=Array.isArray(c.goals)?c.goals:[]; if(!g.length)g=[{id:'g0',name:'Task Complete',userReward:c.userReward||c.reward||0,maxPayout:c.reward||0,affiliateProfit:0}]; return g.map((x,i)=>({id:x.id||('g'+i),name:x.name||x.title||('Goal '+(i+1)),userReward:Number(x.userReward||x.reward||0),maxPayout:Number(x.maxPayout||x.payout||0),affiliateProfit:Number(x.affiliateProfit||x.profit||0)}));}
+async function findSmartLink(){
+  if(!slug) return null;
+  try{
+    const all=(await getDocs(collection(db,'smart_links'))).docs.map(d=>({id:d.id,...d.data()}));
+    return all.find(x=>String(x.slug||x.id)===slug && (!id || x.campaignId===id)) || null;
+  }catch(e){console.warn('Smart link load failed',e);return null;}
+}
+async function clientInfo(){
+  return {userAgent:navigator.userAgent,language:navigator.language,screen:`${screen.width}x${screen.height}`,referrer:document.referrer||'',page:location.href};
+}
+let snap=id?await getDoc(doc(db,'campaigns',id)):null;
+let campaign=snap?.exists()?{id:snap.id,...snap.data()}:null;
+let smart=await findSmartLink();
+if(smart && campaign){ campaign={...campaign,goals:Array.isArray(smart.goals)&&smart.goals.length?smart.goals:campaign.goals,smartId:smart.id,smartSlug:smart.slug,publisherId:smart.publisherId||pub}; }
+if(!campaign){location.href='index.html'}else{
+ const gs=goals(campaign);
+ const total=gs.reduce((a,g)=>a+Number(g.userReward||0),0)||gs.reduce((a,g)=>a+Number(g.maxPayout||0),0);
+ root.innerHTML=`<div class="landing"><div class="task-card"><div class="task-head"><img src="${safe(imgSrc(campaign))}" onerror="this.onerror=null;this.src='${PLACEHOLDER}'" style="width:76px;height:76px;border-radius:18px;object-fit:cover"><div><h2>${safe(campaign.title||'Campaign')}</h2><b class="greenText">VERIFIED TASK PORTAL</b></div></div><div class="cash"><div class="mini">Total Assured Cashback</div><h1>₹${money(total)}</h1></div><div class="task-body"><h3>Payout Breakdown</h3>${gs.map(g=>`<div class="goalrow"><span>↳ ${safe(g.name)}</span><b>₹${money(g.userReward)}</b></div>`).join('')}<label class="mini">UPI ID for Cashback</label><input id="upi" class="field" placeholder="example@upi"><button id="startBtn" type="button" class="btn green full" onclick="startTask()">Confirm & Start Task ✨</button><div class="notice" style="margin-top:24px"><b>Steps To Follow</b><p>${safe(campaign.instructions||campaign.steps||'Complete task properly.').replaceAll('\n','<br>')}</p></div><div class="notice"><b>Important Notice</b><p>One IP/device is allowed once. Wrong UPI or duplicate task can be rejected.</p></div></div></div></div>`;
+}
+window.startTask=async()=>{
+  const btn=document.getElementById('startBtn');
+  const upi=(document.getElementById('upi')?.value||'').trim();
+  if(!upi){alert('Enter UPI ID');return;}
+  try{
+    if(btn){btn.disabled=true;btn.textContent='Starting...'}
+    const info=await clientInfo();
+    const gs=goals(campaign);
+    await addDoc(collection(db,'click_logs'),{clickId,campaignId:id,campaignTitle:campaign.title||'',publisherId:campaign.publisherId||pub,smartId:campaign.smartId||'',slug:campaign.smartSlug||slug,upi,time:Date.now(),status:'clicked',source:'campaign',...info});
+    const payableGoals=gs.filter(g=>Number(g.userReward||0)>0);
+    for(const g of (payableGoals.length?payableGoals:gs.slice(0,1))){
+      await addDoc(collection(db,'lead_submissions'),{clickId,campaignId:id,campaignTitle:campaign.title||'',goalId:g.id,goalName:g.name,publisherId:campaign.publisherId||pub,userId:campaign.publisherId||pub,upi,status:'pending',reward:Number(g.userReward||0),affiliateProfit:Number(g.affiliateProfit||0),time:Date.now(),source:'campaign',smartId:campaign.smartId||'',slug:campaign.smartSlug||slug,...info});
+    }
+  }catch(e){
+    console.error(e);
+    alert('Tracking save failed: '+(e?.message||e));
+    if(btn){btn.disabled=false;btn.textContent='Confirm & Start Task ✨'}
+    return;
+  }
+  const url=campaign.destinationUrl||campaign.url||campaign.offerUrl||'';
+  if(url){
+    const sep=url.includes('?')?'&':'?';
+    location.href=url+sep+'click_id='+encodeURIComponent(clickId)+'&pub='+encodeURIComponent(campaign.publisherId||pub)+'&campaign_id='+encodeURIComponent(id);
+  }else{
+    alert('Task saved. Destination URL not set.');
+    if(btn){btn.disabled=false;btn.textContent='Confirm & Start Task ✨'}
+  }
+};
 </script></body></html>
