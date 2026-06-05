@@ -64,7 +64,7 @@ function parseGoals(text){
   }).filter(Boolean)
 }
 function leadsRows(){return submissions.map(s=>`<tr><td><b>${safe(s.campaignTitle||s.offerName||s.campaignId||'-')}</b><small>${safe(s.goalName||'Task')} • ${safe(s.email||s.userId||'-')}</small></td><td>${safe(s.upi||'-')}</td><td>₹${money(s.reward||0)}<small>Profit ₹${money(s.affiliateProfit||0)}</small></td><td><span class="status ${safe(s.status||'pending')}">${safe(s.status||'pending')}</span></td><td><div class="actions"><button type="button" class="btn green" onclick="lead('${s.id}','${s._collection}','approved','${s.publisherId||s.affiliateId||s.userId||''}',${Number(s.affiliateProfit||s.profit||0)})">Approve</button><button type="button" class="btn red" onclick="lead('${s.id}','${s._collection}','rejected','',0)">Reject</button><button type="button" class="btn light" onclick="delDoc('${s.id}','${s._collection}')">Delete</button></div></td></tr>`).join('')||'<tr><td colspan="5">No leads found</td></tr>'}
-function withdrawRows(){return withdraws.map(w=>`<tr><td><b>${safe(w.name||w.email||w.userId||'-')}</b><small>${safe(w.email||'')}</small></td><td>${safe(w.upi||'-')}</td><td>₹${money(w.amount||0)}</td><td><span class="status ${safe(w.status||'pending')}">${safe(w.status||'pending')}</span></td><td><div class="actions"><button type="button" class="btn green" onclick="upd('${w.id}','${w._collection}','approved')">Approve</button><button type="button" class="btn red" onclick="upd('${w.id}','${w._collection}','rejected')">Reject</button><button type="button" class="btn light" onclick="delDoc('${w.id}','${w._collection}')">Delete</button></div></td></tr>`).join('')||'<tr><td colspan="5">No withdrawals</td></tr>'}
+function withdrawRows(){return withdraws.map(w=>`<tr><td><b>${safe(w.name||w.email||w.userId||'-')}</b><small>${safe(w.email||'')}</small></td><td>${safe(w.upi||'-')}</td><td>₹${money(w.amount||0)}</td><td><span class="status ${safe(w.status||'pending')}">${safe(w.status||'pending')}</span><small>${w.balanceDeducted?'Deducted':'Not deducted'}</small></td><td><div class="actions"><button type="button" class="btn green" onclick="withdrawAction('${w.id}','${w._collection}','approved')">Approve</button><button type="button" class="btn red" onclick="withdrawAction('${w.id}','${w._collection}','rejected')">Reject/Refund</button><button type="button" class="btn light" onclick="delDoc('${w.id}','${w._collection}')">Delete</button></div></td></tr>`).join('')||'<tr><td colspan="5">No withdrawals</td></tr>'}
 
 function adminTotals(){
   const approved=submissions.filter(x=>String(x.status||'').toLowerCase()==='approved');
@@ -109,6 +109,29 @@ window.editCampaignAdmin=(id)=>{const c=campaigns.find(x=>x.id===id);if(!c)retur
 window.saveCampaignAdmin=async(id)=>{try{await updateDoc(doc(db,'campaigns',id),{title:document.getElementById('etitle')?.value||'',destinationUrl:document.getElementById('edestination')?.value||'',trackingUrl:document.getElementById('edestination')?.value||'',image:document.getElementById('eimage')?.value||'',imageUrl:document.getElementById('eimage')?.value||'',logo:document.getElementById('eimage')?.value||'',goals:parseGoals(document.getElementById('egoals')?.value||''),steps:document.getElementById('esteps')?.value||'',instructions:document.getElementById('esteps')?.value||'',updatedAt:Date.now()});window.closeModal();toast('Updated');await refresh()}catch(e){toast(e.message||'Update failed')}};
 window.lead=async(id,col,status,uid,reward)=>{try{await updateDoc(doc(db,col,id),{status,updatedAt:Date.now()});if(status==='approved'&&uid&&reward){const u=users.find(x=>x.id===uid);await setDoc(doc(db,'users',uid),{balance:Number(u?.balance||0)+Number(reward)},{merge:true})}toast('Updated');await refresh()}catch(e){toast(e.message||'Update failed')}};
 window.upd=async(id,col,status)=>{try{await updateDoc(doc(db,col,id),{status,updatedAt:Date.now()});toast('Updated');await refresh()}catch(e){toast(e.message||'Update failed')}};
+window.withdrawAction=async(id,col,status)=>{
+  try{
+    const w=withdraws.find(x=>x.id===id);
+    if(!w){toast('Withdrawal not found');return}
+    const uid=w.userId||w.uid||w.publisherId;
+    const amount=Number(w.amount||0);
+    const currentStatus=String(w.status||'pending').toLowerCase();
+    let patch={status,updatedAt:Date.now()};
+    if(status==='approved' && !w.balanceDeducted && uid){
+      const u=users.find(x=>x.id===uid);
+      await setDoc(doc(db,'users',uid),{balance:Math.max(0,Number(u?.balance||0)-amount)},{merge:true});
+      patch.balanceDeducted=true; patch.deductedOnApprove=true;
+    }
+    if(status==='rejected' && w.balanceDeducted && !w.refunded && uid && currentStatus!=='rejected'){
+      const u=users.find(x=>x.id===uid);
+      await setDoc(doc(db,'users',uid),{balance:Number(u?.balance||0)+amount},{merge:true});
+      patch.refunded=true; patch.refundedAt=Date.now();
+    }
+    await updateDoc(doc(db,col,id),patch);
+    toast(status==='rejected'?'Rejected / refunded':'Withdrawal approved');
+    await refresh();
+  }catch(e){console.error(e);toast(e?.message||'Withdraw update failed')}
+};
 window.delDoc=async(id,col)=>{try{if(!confirm('Delete?'))return;await deleteDoc(doc(db,col,id));toast('Deleted');await refresh()}catch(e){toast(e.message||'Delete failed')}};
 window.addBal=async(uid)=>{let u=users.find(x=>x.id===uid),a=Number(document.getElementById('bal_'+uid).value||0);await setDoc(doc(db,'users',uid),{balance:Number(u?.balance||0)+a},{merge:true});await refresh()};
 window.setBal=async(uid)=>{let a=Number(document.getElementById('bal_'+uid).value||0);await setDoc(doc(db,'users',uid),{balance:a},{merge:true});await refresh()};

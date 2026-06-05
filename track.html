@@ -1,0 +1,29 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Tracking Status</title><link rel="stylesheet" href="style.css"></head><body><div id="root"></div><script type="module">
+import {auth,db} from './firebase.js';
+import {onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import {collection,getDocs} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+const safe=v=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+const money=n=>Number(n||0).toLocaleString('en-IN');
+const compactDate=(value)=>{try{if(!value)return '-';let d;if(value?.toDate)d=value.toDate();else if(value?.seconds)d=new Date(value.seconds*1000);else if(typeof value==='number')d=new Date(value<10000000000?value*1000:value);else d=new Date(value);return isNaN(d)?'-':d.toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}catch(_){return '-'}};
+const PLACEHOLDER='data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" rx="24" fill="#eef4ff"/><text x="60" y="68" font-size="14" font-family="Arial" fill="#2f6df6" text-anchor="middle" font-weight="700">OFFER</text></svg>`);
+const img=d=>String(d?.image||d?.imageUrl||d?.logo||'').trim()||PLACEHOLDER;
+async function getCol(name){try{return (await getDocs(collection(db,name))).docs.map(d=>({id:d.id,...d.data()}))}catch(e){console.warn(name,e.message);return null}}
+function statusBadge(s){s=String(s||'clicked').toLowerCase();return `<span class="status ${safe(s)}">${safe(s)}</span>`}
+async function render(){
+ const qs=new URLSearchParams(location.search), slug=qs.get('slug')||'', pub=qs.get('pub')||'';
+ root.innerHTML='<div class="track-page"><div class="track-card"><h2>Loading tracking...</h2></div></div>';
+ const [links,camps,clicks,leads]=await Promise.all([getCol('smart_links'),getCol('campaigns'),getCol('click_logs'),getCol('lead_submissions')]);
+ if(!links||!camps||!clicks||!leads){root.innerHTML='<div class="track-page"><div class="track-card"><h2>Login required</h2><p class="muted">Open this page after logging in to the publisher panel.</p><a class="btn blue" href="login.html">Login</a></div></div>';return}
+ const link=(links||[]).find(x=>String(x.slug||x.id)===slug && (!pub || x.publisherId===pub)) || (links||[]).find(x=>String(x.slug||x.id)===slug);
+ if(!link){root.innerHTML='<div class="track-page"><div class="track-card"><h2>Tracking not found</h2><p class="muted">Invalid or deleted smart campaign.</p></div></div>';return}
+ const camp=(camps||[]).find(x=>x.id===link.campaignId)||{};
+ const myClicks=(clicks||[]).filter(x=>x.smartId===link.id || x.slug===link.slug).sort((a,b)=>(b.time||0)-(a.time||0));
+ const myLeads=(leads||[]).filter(x=>x.smartId===link.id || x.slug===link.slug).sort((a,b)=>(b.time||0)-(a.time||0));
+ const pending=myLeads.filter(x=>String(x.status||'pending').toLowerCase()==='pending').length;
+ const approved=myLeads.filter(x=>String(x.status||'').toLowerCase()==='approved').length;
+ const reward=myLeads.filter(x=>String(x.status||'').toLowerCase()==='approved').reduce((a,x)=>a+Number(x.reward||0),0);
+ root.innerHTML=`<div class="track-page"><div class="track-card"><div class="track-head"><img src="${safe(img(camp))}" onerror="this.onerror=null;this.src='${PLACEHOLDER}'"><div><h1>${safe(link.campaignTitle||camp.title||'Smart Campaign')}</h1><p class="muted">Tracking ID: ${safe(slug)}</p></div></div><div class="track-summary"><div><span>Clicks</span><b>${myClicks.length}</b></div><div><span>Pending</span><b>${pending}</b></div><div><span>Approved</span><b>₹${money(reward)}</b></div></div><h3>Lead Status</h3><div class="track-list">${myLeads.slice(0,30).map(x=>`<div class="track-item"><div><b>${safe(x.goalName||'Task')}</b><small>${compactDate(x.time||x.createdAt)} • ${safe(x.upi||'')}</small></div>${statusBadge(x.status||'pending')}</div>`).join('')||'<div class="empty small">No lead yet. Worker has not started/submitted the task.</div>'}</div><h3 style="margin-top:18px">Recent Clicks</h3><div class="track-list">${myClicks.slice(0,10).map(x=>`<div class="track-item"><div><b>Clicked</b><small>${compactDate(x.time||x.createdAt)} • ${safe(x.ip||x.language||'')}</small></div>${statusBadge('clicked')}</div>`).join('')||'<div class="empty small">No click yet.</div>'}</div></div></div>`;
+}
+onAuthStateChanged(auth,()=>render());
+</script></body></html>

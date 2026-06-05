@@ -203,19 +203,27 @@ function renderReportsPage(){
 
 function smartBase(){return location.origin+location.pathname.replace(/[^/]*$/,'')}
 function smartUrl(l){return smartBase()+'campaign.html?id='+(l.campaignId||'')+'&slug='+(l.slug||l.id)+'&pub='+(l.publisherId||user?.uid||'')}
+function trackUrl(l){return smartBase()+'track.html?slug='+(encodeURIComponent(l.slug||l.id))+'&pub='+(encodeURIComponent(l.publisherId||user?.uid||''))}
+function shortLink(v){try{const u=new URL(v);return u.host+(u.pathname.length>18?u.pathname.slice(0,18)+'…':u.pathname)}catch(_){return String(v||'').slice(0,32)}}
 function smartCard(l){
-  const link=smartUrl(l);
+  const workerLink=smartUrl(l);
+  const statusLink=trackUrl(l);
   const goals=Array.isArray(l.goals)?l.goals:[];
   const worker=goals.reduce((a,g)=>a+Number(g.userReward||0),0);
   const profit=goals.reduce((a,g)=>a+Number(g.affiliateProfit||0),0);
   const c=campaigns.find(x=>x.id===l.campaignId)||{};
+  const clicks=clickLogs.filter(x=>x.smartId===l.id || x.slug===l.slug).length;
+  const leads=submissions.filter(x=>x.smartId===l.id || x.slug===l.slug).length;
   return `<div class="smart-card pro-smart" id="smart_${l.id}">
     <div class="smart-card-head">
       <div class="smart-title">${imgTag(c)}<div><h2>${safe(l.campaignTitle||l.offerName||c.title||'Smart Campaign')}</h2><p class="muted">${safe(l.slug||l.id)} • ${goals.length||1} goal</p></div></div>
       <div class="actions"><button type="button" class="iconbtn" title="Edit" onclick="openSmartBuilder('${l.campaignId}','${l.id}')">✎</button><button type="button" class="iconbtn danger" title="Delete" onclick="deleteSmartLive('${l.id}')">🗑</button></div>
     </div>
-    <div class="smart-metrics"><span>Worker <b>₹${money(worker)}</b></span><span>Profit <b>₹${money(profit)}</b></span><span class="greenText">Active</span></div>
-    <div class="smart-link blueSoft"><b>Tracking Link</b><div class="toolbar"><input class="field" value="${link}" readonly><button type="button" class="btn blue" onclick="navigator.clipboard.writeText('${link}');toast('Copied')">Copy</button></div></div>
+    <div class="smart-metrics"><span>Worker <b>₹${money(worker)}</b></span><span>Profit <b>₹${money(profit)}</b></span><span>Clicks <b>${clicks}</b></span><span>Leads <b>${leads}</b></span></div>
+    <div class="smart-links-grid">
+      <div class="smart-link blueSoft"><b>1. Worker Link (P1)</b><div class="toolbar"><input class="field" value="${workerLink}" readonly><button type="button" class="btn blue" onclick="navigator.clipboard.writeText('${workerLink}');toast('Worker link copied')">Copy</button></div><small>${safe(shortLink(workerLink))}</small></div>
+      <div class="smart-link yellowSoft"><b>2. Tracking Status</b><div class="toolbar"><input class="field" value="${statusLink}" readonly><button type="button" class="btn gold" onclick="navigator.clipboard.writeText('${statusLink}');toast('Tracking link copied')">Copy</button></div><small>Check clicked / pending / approved</small></div>
+    </div>
   </div>`
 }
 function renderSmartLinksPage(){
@@ -264,10 +272,24 @@ window.saveSmartLive=async(smartId='')=>{
 window.deleteSmartLive=async(id)=>{try{if(!confirm('Delete this smart campaign?'))return; await deleteDoc(doc(db,'smart_links',id)); smartLinks=smartLinks.filter(x=>x.id!==id); document.getElementById('smart_'+id)?.remove(); if(!document.querySelector('.smart-card')) renderSmartLinksPage(); toast('Deleted')}catch(e){console.error(e);toast(e?.message||'Delete failed')}};
 function renderWalletPage(){
   if(!requireLogin())return;
-  const history=[...withdraws.map(w=>({...w,kind:'Payout'})),...submissions.filter(s=>s.status==='approved').map(s=>({...s,kind:'Task',amount:s.reward||s.payout||0,name:s.campaignTitle||s.offerName||s.campaignId,status:'credit'}))].sort((a,b)=>(b.time||b.createdAt||0)-(a.time||a.createdAt||0));
-  shell('wallet',`<div class="banner compact"><b>Wallet</b><small>Withdrawals and transaction history.</small></div><div class="grid2"><div class="panel payout-panel"><h2>Request Payout</h2><div class="balance-card"><span>Available Balance</span><strong>₹${money(profile?.balance||0)}</strong><em>Min Withdraw ₹100</em></div><input id="wname" class="field" placeholder="Name"><input id="wupi" class="field" placeholder="UPI ID"><input id="wamount" type="number" class="field" placeholder="Amount"><button type="button" onclick="requestWithdrawLive()" class="btn full">Withdraw Money →</button></div><div class="panel history-panel"><div class="panel-head"><h2>History</h2><span>${history.length}</span></div><div id="walletHistory" class="wallet-history">${history.slice(0,20).map(x=>`<div class="history-item"><div><b>${safe(x.name||x.kind||'Transaction')}</b><small>${compactDate(x.time||x.createdAt)} • ${safe(x.upi||x.status||'')}</small></div><strong class="${x.kind==='Task'?'greenText':''}">${x.kind==='Task'?'+':''}₹${money(x.amount||0)}</strong></div>`).join('')||'<div class="empty small">No history</div>'}</div></div></div>`);
+  const pendingAmount=withdraws.filter(w=>String(w.status||'pending').toLowerCase()==='pending').reduce((a,w)=>a+Number(w.amount||0),0);
+  const approvedAmount=withdraws.filter(w=>String(w.status||'').toLowerCase()==='approved').reduce((a,w)=>a+Number(w.amount||0),0);
+  const history=[...withdraws.map(w=>({...w,kind:'Payout',name:w.name||'Withdraw Request'})),...submissions.filter(s=>s.status==='approved').map(s=>({...s,kind:'Task',amount:s.reward||s.payout||0,name:s.campaignTitle||s.offerName||s.campaignId,status:'credit'}))].sort((a,b)=>(b.time||b.createdAt||0)-(a.time||a.createdAt||0));
+  shell('wallet',`<div class="banner compact"><b>Wallet</b><small>Withdrawals and transaction history.</small></div><div class="wallet-stats"><div><span>Available</span><b>₹${money(profile?.balance||0)}</b></div><div><span>Pending</span><b>₹${money(pendingAmount)}</b></div><div><span>Paid</span><b>₹${money(approvedAmount)}</b></div></div><div class="grid2"><div class="panel payout-panel"><h2>Request Payout</h2><div class="balance-card"><span>Available Balance</span><strong>₹${money(profile?.balance||0)}</strong><em>Min Withdraw ₹100</em></div><input id="wname" class="field" placeholder="Name"><input id="wupi" class="field" placeholder="UPI ID"><input id="wamount" type="number" class="field" placeholder="Amount"><button type="button" onclick="requestWithdrawLive()" class="btn full">Withdraw Money →</button><p class="muted small">Amount will be moved to pending immediately.</p></div><div class="panel history-panel"><div class="panel-head"><h2>History</h2><span>${history.length}</span></div><div id="walletHistory" class="wallet-history">${history.slice(0,30).map(x=>{const st=String(x.status||'pending').toLowerCase();return `<div class="history-item compact-history"><div><b>${safe(x.kind==='Task'?'Task: '+(x.name||'Reward'):'Payout Request')}</b><small>${compactDate(x.time||x.createdAt)} • ${safe(x.upi||x.email||'')}</small></div><div class="hist-right"><strong class="${x.kind==='Task'?'greenText':'redText'}">${x.kind==='Task'?'+':'-'}₹${money(x.amount||0)}</strong><span class="status ${st}">${st}</span></div></div>`}).join('')||'<div class="empty small">No history</div>'}</div></div></div>`);
 }
-window.requestWithdrawLive=async()=>{const amount=Number(document.getElementById('wamount')?.value||0); if(amount<100){toast('Minimum withdraw ₹100');return} if(amount>Number(profile?.balance||0)){toast('Balance low');return} await addDoc(collection(db,'withdrawals'),{userId:user.uid,email:user.email,name:document.getElementById('wname')?.value||'',upi:document.getElementById('wupi')?.value||'',amount,status:'pending',time:Date.now()}); await loadData(); renderWalletPage(); toast('Withdraw requested')};
+window.requestWithdrawLive=async()=>{
+  try{
+    const amount=Number(document.getElementById('wamount')?.value||0);
+    if(amount<100){toast('Minimum withdraw ₹100');return}
+    if(amount>Number(profile?.balance||0)){toast('Balance low');return}
+    const btn=document.querySelector('button[onclick="requestWithdrawLive()"]'); if(btn){btn.disabled=true;btn.textContent='Processing...'}
+    const newBalance=Math.max(0,Number(profile?.balance||0)-amount);
+    await addDoc(collection(db,'withdrawals'),{userId:user.uid,email:user.email,name:document.getElementById('wname')?.value||'',upi:document.getElementById('wupi')?.value||'',amount,status:'pending',balanceDeducted:true,time:Date.now()});
+    await setDoc(doc(db,'users',user.uid),{balance:newBalance},{merge:true});
+    profile={...profile,balance:newBalance};
+    await loadData(); renderWalletPage(); toast('Withdraw requested');
+  }catch(e){console.error(e);toast(e?.message||'Withdraw failed')}
+};
 function renderPostbackPage(){
   if(!requireLogin())return;
   const cloudUrl = settings.postbackUrl || (siteBase().replace(/\/$/,'') + '/postback-api?click_id={click_id}&event={event_id}&payout={payout}');
