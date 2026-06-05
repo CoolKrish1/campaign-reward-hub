@@ -15,8 +15,21 @@ document.addEventListener('submit',e=>e.preventDefault(),true);
 document.addEventListener('click',e=>{
   const btn=e.target.closest('button');
   if(btn && !btn.getAttribute('type')) btn.setAttribute('type','button');
-  const a=e.target.closest('a[href="#"],a[href=""],a[href="javascript:void(0)"]');
-  if(a)e.preventDefault();
+  const a=e.target.closest('a');
+  if(!a) return;
+  const href=a.getAttribute('href')||'';
+  if(href==='#'||href===''||href.startsWith('javascript:')){ e.preventDefault(); return; }
+  if(a.target==='_blank' || a.hasAttribute('download')) return;
+  try{
+    const u=new URL(href, location.href);
+    const file=(u.pathname.split('/').pop()||'');
+    if(u.origin===location.origin && file.endsWith('.html')){
+      e.preventDefault();
+      const page=pageFromPath(u.pathname);
+      history.pushState({page},'',u.pathname+u.search);
+      renderRoute(page);
+    }
+  }catch(_){}
 },true);
 export function toast(msg){let old=document.querySelector('.toast'); if(old)old.remove(); let t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2200)}
 window.toast=toast;
@@ -97,10 +110,10 @@ function renderRoute(page){
   if(page==='offers') return renderOffersPage();
   if(page==='reports') return renderReportsPage();
   if(page==='smart') return renderSmartLinksPage();
-  if(page==='wallet') { location.href='wallet.html'; return; }
-  if(page==='postback') { location.href='postback.html'; return; }
-  if(page==='profile') { location.href='profile.html'; return; }
-  if(page==='support') { location.href='support.html'; return; }
+  if(page==='wallet') return renderWalletPage();
+  if(page==='postback') return renderPostbackPage();
+  if(page==='profile') return renderProfilePage();
+  if(page==='support') return renderSupportPage();
   if(page==='admin') { location.href='admin.html'; return; }
 }
 function renderDashboardPage(){
@@ -149,8 +162,20 @@ window.openSmartBuilder=(campaignId, smartId='')=>{
   modal(`<h2>${l?'Edit':'New'} Campaign</h2><label class="mini">Selected Offer</label><input class="field" value="${safe(c.title||'Offer')}" readonly><label class="mini">Campaign Title</label><input id="smartTitle" class="field" value="${safe(l?.campaignTitle||c.title||'')}"><div class="goal-panel"><div class="toolbar"><b>Payout Calculator</b><label class="ref-toggle"><input type="checkbox" id="smartP2" ${l?.enableP2?'checked':''}> Enable P2 Referral</label></div>${goals.map((g,i)=>`<div class="goalbox"><h3>${safe(g.name)} <span class="tag">Max ₹${money(g.maxPayout)}</span></h3><label class="mini">Worker Payout (P1)</label><input class="field smartSplit" data-max="${Number(g.maxPayout||0)}" data-name="${safe(g.name)}" value="${Number(g.userReward||0)}" type="number" min="0" max="${Number(g.maxPayout||0)}" oninput="calcProfit(this)"><div class="profitline">Your Profit: ₹<span>${money(Math.max(0,Number(g.maxPayout||0)-Number(g.userReward||0)))}</span></div></div>`).join('')}</div><label class="mini">Worker Steps</label><textarea id="smartSteps" class="field" rows="4" placeholder="Add short task steps...">${safe(l?.steps||c.instructions||c.steps||'')}</textarea><button type="button" class="btn full" onclick="saveSmartLive('${c.id}','${smartId}')">${l?'Save Changes':'Create Campaign'}</button>`)
 };
 window.calcProfit=(el)=>{let max=Number(el.dataset.max||0), val=Math.min(max,Number(el.value||0)); if(Number(el.value)>max){el.value=max;val=max} el.closest('.goalbox').querySelector('.profitline span').textContent=money(Math.max(0,max-val));};
-window.saveSmartLive=async(campaignId, smartId='')=>{const c=campaigns.find(x=>x.id===campaignId)||{}; const gs=[...document.querySelectorAll('.smartSplit')].map((el,i)=>({id:'g'+i,name:el.dataset.name,maxPayout:Number(el.dataset.max||0),userReward:Number(el.value||0),affiliateProfit:Math.max(0,Number(el.dataset.max||0)-Number(el.value||0))})); const payload={campaignId,campaignTitle:smartTitle.value||c.title||'',publisherId:user.uid,slug:(smartTitle.value||c.title||'offer').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Date.now().toString().slice(-4),goals:gs,enableP2:smartP2.checked,steps:smartSteps.value,updatedAt:Date.now()}; if(smartId){await updateDoc(doc(db,'smart_links',smartId),payload)}else{payload.createdAt=Date.now(); await addDoc(collection(db,'smart_links'),payload)} closeModal(); await loadData(); renderSmartLinksPage(); toast(smartId?'Updated':'Created')};
+window.saveSmartLive=async(campaignId, smartId='')=>{const c=campaigns.find(x=>x.id===campaignId)||{}; const gs=[...document.querySelectorAll('.smartSplit')].map((el,i)=>({id:'g'+i,name:el.dataset.name,maxPayout:Number(el.dataset.max||0),userReward:Number(el.value||0),affiliateProfit:Math.max(0,Number(el.dataset.max||0)-Number(el.value||0))})); const payload={campaignId,campaignTitle:document.getElementById('smartTitle')?.value||c.title||'',publisherId:user.uid,slug:(smartTitle.value||c.title||'offer').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Date.now().toString().slice(-4),goals:gs,enableP2:document.getElementById('smartP2')?.checked||false,steps:document.getElementById('smartSteps')?.value||'',updatedAt:Date.now()}; if(smartId){await updateDoc(doc(db,'smart_links',smartId),payload)}else{payload.createdAt=Date.now(); await addDoc(collection(db,'smart_links'),payload)} closeModal(); await loadData(); renderSmartLinksPage(); toast(smartId?'Updated':'Created')};
 window.deleteSmartLive=async(id)=>{if(!confirm('Delete this smart campaign?'))return; await deleteDoc(doc(db,'smart_links',id)); smartLinks=smartLinks.filter(x=>x.id!==id); document.getElementById('smart_'+id)?.remove(); if(!smartLinks.length) renderSmartLinksPage(); toast('Deleted')};
+
+function compactDate(t){const d=new Date(t||Date.now());return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' • '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}
+function renderWalletPage(){
+  if(!requireLogin())return;
+  const history=[...withdraws.map(w=>({...w,kind:'Payout'})),...submissions.filter(s=>s.status==='approved').map(s=>({...s,kind:'Task',amount:s.reward||s.payout||0,name:s.campaignTitle||s.offerName||s.campaignId,status:'credit'}))].sort((a,b)=>(b.time||b.createdAt||0)-(a.time||a.createdAt||0));
+  shell('wallet',`<div class="banner compact"><b>Secure Payment Gateway</b><small>Payments are processed after approval.</small></div><div class="grid2"><div class="panel payout-panel"><h2>Request Payout</h2><div class="balance-card"><span>Available Balance</span><strong>₹${money(profile?.balance||0)}</strong><em>Min Withdraw ₹100</em></div><input id="wname" class="field" placeholder="Name"><input id="wupi" class="field" placeholder="UPI ID"><input id="wamount" type="number" class="field" placeholder="Amount"><button type="button" onclick="requestWithdrawLive()" class="btn full">Withdraw Money →</button></div><div class="panel history-panel"><div class="panel-head"><h2>History</h2><span>${history.length}</span></div><div id="walletHistory" class="wallet-history">${history.slice(0,20).map(x=>`<div class="history-item"><div><b>${safe(x.name||x.kind||'Transaction')}</b><small>${compactDate(x.time||x.createdAt)} • ${safe(x.upi||x.status||'')}</small></div><strong class="${x.kind==='Task'?'greenText':''}">${x.kind==='Task'?'+':''}₹${money(x.amount||0)}</strong></div>`).join('')||'<div class="empty small">No history</div>'}</div></div></div>`);
+}
+window.requestWithdrawLive=async()=>{const amount=Number(document.getElementById('wamount')?.value||0); if(amount<100){toast('Minimum withdraw ₹100');return} if(amount>Number(profile?.balance||0)){toast('Balance low');return} await addDoc(collection(db,'withdrawals'),{userId:user.uid,email:user.email,name:document.getElementById('wname')?.value||'',upi:document.getElementById('wupi')?.value||'',amount,status:'pending',time:Date.now()}); await loadData(); renderWalletPage(); toast('Withdraw requested')};
+function renderPostbackPage(){ if(!requireLogin())return; shell('postback',`<div class="panel"><h2>Global Postback URL</h2><div class="toolbar"><input class="field" placeholder="https://domain.com/callback?click_id={click_id}&payout={payout}&status={event_id}"><button type="button" class="btn">Save</button></div><div class="macro-grid"><span>{click_id}</span><span>{event_id}</span><span>{payout}</span><span>{p1_upi}</span><span>{ip}</span><span>{sub1}</span></div></div>`)}
+function renderProfilePage(){ if(!requireLogin())return; shell('profile',`<div class="grid2"><div class="panel details-panel"><h2>Details</h2><p>Name <b>${safe(profile?.name||'')}</b></p><p>Email <b>${safe(profile?.email||user.email)}</b></p><p>ID <b>${safe(user.uid.slice(0,8).toUpperCase())}</b></p><p>Role <b>${safe(profile?.role||'user')}</b></p></div><div class="panel"><h2>Security</h2><input class="field" placeholder="Current Password"><input class="field" placeholder="New Password"><button type="button" class="btn full">Update</button></div></div>`)}
+function renderSupportPage(){ if(!requireLogin())return; shell('support',`<div class="panel"><h2>Support Ticket</h2><input id="subject" class="field" placeholder="Subject"><textarea id="message" class="field" rows="5" placeholder="Message"></textarea><button type="button" onclick="sendTicketLive()" class="btn blue">Submit Ticket</button></div>`)}
+window.sendTicketLive=async()=>{await addDoc(collection(db,'support'),{userId:user.uid,email:user.email,subject:document.getElementById('subject')?.value||'',message:document.getElementById('message')?.value||'',status:'open',time:Date.now()});toast('Ticket submitted')};
 
 export async function submitLead({campaignId,goalId='',goalName='',upi='',note='',proofUrl=''}){
  const c=campaigns.find(x=>x.id===campaignId)||{}; const goal=getGoals(c).find(g=>g.id===goalId)||getGoals(c)[0]||{};
