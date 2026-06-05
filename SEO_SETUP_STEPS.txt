@@ -1,0 +1,29 @@
+SEO setup steps for Effortless Earn
+
+1) Deploy this ZIP to GitHub/Firebase Hosting.
+2) Open these URLs and confirm they work:
+   https://effortless-earn-7f39e.web.app/robots.txt
+   https://effortless-earn-7f39e.web.app/sitemap.xml
+   https://effortless-earn-7f39e.web.app/about.html
+   https://effortless-earn-7f39e.web.app/public-offers.html
+
+3) If you use a custom domain, replace https://effortless-earn-7f39e.web.app inside sitemap.xml and robots.txt with your real domain.
+
+4) Go to Google Search Console:
+   https://search.google.com/search-console
+
+5) Add your website property.
+   Easy method: use URL prefix, for example https://effortless-earn-7f39e.web.app
+
+6) Verify ownership.
+   If Google gives an HTML file, upload it to your GitHub project root and deploy.
+   If Google gives meta tag, paste it inside <head> of index.html.
+
+7) Submit sitemap:
+   sitemap.xml
+
+8) Wait. Indexing can take a few days. Ranking can take weeks/months.
+
+Important:
+- Admin/dashboard/wallet/reports are noindex because Google should not index private user pages.
+- Public SEO pages are indexable: home, public offers, about, contact, privacy, terms.

@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /dashboard.html
+Disallow: /wallet.html
+Disallow: /reports.html
+Disallow: /smartlinks.html
+Disallow: /profile.html
+Disallow: /support.html
+
+Sitemap: https://effortless-earn-7f39e.web.app/sitemap.xml

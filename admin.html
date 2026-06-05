@@ -1,4 +1,5 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin</title><link rel="stylesheet" href="style.css"></head><body><div id="root"></div><div id="modal" class="modal"><div class="modalbox"><button type="button" class="close" onclick="closeModal()">×</button><div id="modalContent"></div></div></div><script type="module">
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex, nofollow"><title>Admin</title><link rel="stylesheet" href="style.css"></head><body><div id="root"></div><div id="modal" class="modal"><div class="modalbox"><button type="button" class="close" onclick="closeModal()">×</button><div id="modalContent"></div></div></div><script type="module">
 import {init,requireLogin,shell,campaigns,submissions,withdraws,users,smartLinks,settings,loadData,offerCards,isAdmin,getGoals,money,toast,modal,compactDate,downloadCSV} from './app.js';
 import {db,storage} from './firebase.js';
 import {collection,addDoc,doc,setDoc,updateDoc,deleteDoc} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
