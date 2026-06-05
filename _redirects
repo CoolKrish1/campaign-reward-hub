@@ -1,1 +1,3 @@
+/track/:slug /track.html?slug=:slug 200
+/campaign/:slug /campaign.html?slug=:slug 200
 /* /index.html 200

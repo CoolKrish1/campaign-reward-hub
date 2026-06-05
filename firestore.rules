@@ -20,20 +20,24 @@ service cloud.firestore {
 
     match /click_logs/{id} {
       allow create: if true;
-      allow read, update, delete: if loggedIn();
+      allow read: if true;
+      allow update, delete: if loggedIn();
     }
     match /clicks/{id} {
       allow create: if true;
-      allow read, update, delete: if loggedIn();
+      allow read: if true;
+      allow update, delete: if loggedIn();
     }
 
     match /lead_submissions/{id} {
       allow create: if true;
-      allow read, update, delete: if loggedIn();
+      allow read: if true;
+      allow update, delete: if loggedIn();
     }
     match /submissions/{id} {
       allow create: if true;
-      allow read, update, delete: if loggedIn();
+      allow read: if true;
+      allow update, delete: if loggedIn();
     }
 
     match /users/{uid} {

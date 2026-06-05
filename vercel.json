@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/track/:slug", "destination": "/track.html?slug=:slug" },
+    { "source": "/campaign/:slug", "destination": "/campaign.html?slug=:slug" }
+  ]
+}
