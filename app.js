@@ -11,6 +11,25 @@ export const isAffiliate=()=>['affiliate','admin'].includes(profile?.role) || is
 const safe=(v)=>String(v??'').replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
 export const money=(n)=>Number(n||0).toLocaleString('en-IN');
 
+// Safe compact date formatter used by wallet, reports and history cards.
+// Supports Firebase Timestamp, milliseconds, seconds, ISO string, or missing values.
+export function compactDate(value){
+  try{
+    if(!value) return '-';
+    let d;
+    if(value && typeof value.toDate === 'function') d = value.toDate();
+    else if(typeof value === 'number') d = new Date(value < 10000000000 ? value * 1000 : value);
+    else if(value && typeof value.seconds === 'number') d = new Date(value.seconds * 1000);
+    else d = new Date(value);
+    if(isNaN(d.getTime())) return '-';
+    const date = d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+    const time = d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    return `${date}, ${time}`;
+  }catch(_){ return '-'; }
+}
+window.compactDate = compactDate;
+
+
 // Global anti-refresh guard: form submit, blank # links and buttons without type.
 document.addEventListener('submit',e=>e.preventDefault(),true);
 document.addEventListener('click',e=>{
@@ -133,7 +152,7 @@ function renderOffersPage(){
 let reportPage=1, reportFilter='all', reportCols={time:true,offer:true,event:true,payout:true,status:true,p1:true,p2:true,ip:false,source:false,sub1:false,sub2:false};
 function reportStatus(r){return (r.status||r.type||'clicked').toLowerCase()}
 function reportRowsData(){return [...submissions.map(x=>({...x,type:(x.status||'pending')})),...clickLogs.map(x=>({...x,type:'clicked'}))].sort((a,b)=>(b.time||b.createdAt||0)-(a.time||a.createdAt||0));}
-function reportDate(t){const d=new Date(t||Date.now());return `<b>${d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</b><br><small>${d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</small>`}
+function reportDate(t){const v=compactDate(t); const parts=v.split(', '); return `<b>${parts[0]||'-'}</b><br><small>${parts[1]||''}</small>`}
 function reportRow(r){const st=reportStatus(r);return `<tr><td data-col="time">${reportDate(r.time||r.createdAt)}</td><td data-col="offer"><b>${safe(r.campaignTitle||r.offerName||r.campaignId||r.campaign||'-')}</b></td><td data-col="event"><span class="blueText">${safe(r.goalName||r.event||'BASE')}</span></td><td data-col="payout"><b class="greenText">${Number(r.reward||r.payout||0)?'₹'+money(r.reward||r.payout):'-'}</b></td><td data-col="status"><span class="status ${st}">${st}</span></td><td data-col="p1">${r.upi?String(r.upi).slice(0,8)+'***':(safe(r.p1||r.worker||'-'))}</td><td data-col="p2">${safe(r.p2||r.refer||'-')}</td><td data-col="ip">${safe(r.ip||r.ipAddress||'-')}</td><td data-col="source"><span class="sourceTag">${safe(r.source||'campaign')}</span></td><td data-col="sub1">${safe(r.sub1||'-')}</td><td data-col="sub2">${safe(r.sub2||'-')}</td></tr>`}
 function getFilteredReports(){let q=(document.getElementById('q')?.value||'').toLowerCase();return (window._reports||[]).filter(x=>reportFilter==='all'||reportStatus(x)===reportFilter).filter(x=>(x.campaignTitle||x.offerName||x.campaignId||x.campaign||'').toLowerCase().includes(q));}
 window.renderReportRows=()=>{let arr=getFilteredReports();let pages=Math.max(1,Math.ceil(arr.length/20));if(reportPage>pages)reportPage=pages;let start=(reportPage-1)*20;let pageArr=arr.slice(start,start+20);document.getElementById('rows').innerHTML=pageArr.map(reportRow).join('')||'<tr><td colspan="11" class="emptyCell">No Records Found</td></tr>';document.getElementById('pageInfo').textContent=`Page ${reportPage} / ${pages} • ${arr.length} records`;document.getElementById('prevPage').disabled=reportPage<=1;document.getElementById('nextPage').disabled=reportPage>=pages;applyReportCols();}
