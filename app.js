@@ -106,6 +106,7 @@ window.openOffer=(id)=>{ const d=campaigns.find(x=>x.id===id); if(!d)return; con
 window.navigate=(page,url)=>{ history.pushState({page},'',url); renderRoute(page); return false; };
 window.addEventListener('popstate',()=>renderRoute(pageFromPath(location.pathname)));
 function pageFromPath(path){let f=(path.split('/').pop()||'dashboard.html').replace('.html',''); return f==='index'?'dashboard':(f==='smartlinks'?'smart':f);}
+window.__renderRoute=renderRoute;
 function renderRoute(page){
   if(page==='dashboard') return renderDashboardPage();
   if(page==='offers') return renderOffersPage();
@@ -146,29 +147,54 @@ function renderReportsPage(){
 
 function smartBase(){return location.origin+location.pathname.replace(/[^/]*$/,'')}
 function smartUrl(l){return smartBase()+'campaign.html?id='+(l.campaignId||'')+'&slug='+(l.slug||l.id)+'&pub='+(l.publisherId||user?.uid||'')}
-function smartCard(l){const link=smartUrl(l);return `<div class="smart-card" id="smart_${l.id}"><div class="smart-card-head"><div><h2>${safe(l.campaignTitle||l.campaignId||'Smart Campaign')}</h2><p class="muted">${safe(l.slug||l.id)}</p></div><div class="actions"><button type="button" class="iconbtn" onclick="openSmartBuilder('${l.campaignId}','${l.id}')">✎</button><button type="button" class="iconbtn danger" onclick="deleteSmartLive('${l.id}')">🗑</button></div></div><div class="smart-links"><div class="smart-link blueSoft"><b>Worker Link (P1)</b><div class="toolbar"><input class="field" value="${link}" readonly><button type="button" class="btn blue" onclick="navigator.clipboard.writeText('${link}');toast('Copied')">Copy</button></div></div><div class="smart-link yellowSoft"><b>Tracking Status</b><div class="toolbar"><input class="field" value="${link}" readonly><button type="button" class="btn yellow" onclick="navigator.clipboard.writeText('${link}');toast('Copied')">Copy</button></div></div></div></div>`}
-function activeCampaigns(){return campaigns.filter(x=>x.status!=='paused')}
-function smartRows(){return smartLinks.map(smartCard).join('')||`<div class="empty">No smart campaign yet. Open an offer and create one.</div>`}
+function smartCard(l){
+  const link=smartUrl(l);
+  return `<div class="smart-card" id="smart_${l.id}"><div class="smart-card-head"><div><h2>${safe(l.campaignTitle||l.offerName||'Smart Campaign')}</h2><p class="muted">${safe(l.slug||l.id)}</p></div><div class="actions"><button type="button" class="iconbtn" onclick="openSmartBuilder('${l.campaignId}','${l.id}')">✎</button><button type="button" class="iconbtn danger" onclick="deleteSmartLive('${l.id}')">🗑</button></div></div><div class="smart-links"><div class="smart-link blueSoft"><b>Worker Link (P1)</b><div class="toolbar"><input class="field" value="${link}" readonly><button type="button" class="btn blue" onclick="navigator.clipboard.writeText('${link}');toast('Copied')">Copy</button></div></div><div class="smart-link yellowSoft"><b>Tracking Status</b><div class="toolbar"><input class="field" value="${link}" readonly><button type="button" class="btn yellow" onclick="navigator.clipboard.writeText('${link}');toast('Copied')">Copy</button></div></div></div></div>`
+}
 function renderSmartLinksPage(){
   if(!requireLogin())return;
-  const selected=new URLSearchParams(location.search).get('campaign')||'';
-  const pre=campaigns.find(x=>x.id===selected)||null;
+  const selectedId=new URLSearchParams(location.search).get('campaign')||'';
+  const pre=campaigns.find(x=>x.id===selectedId)||null;
   const list=pre?smartLinks.filter(l=>l.campaignId===pre.id):smartLinks;
-  shell('smart',`<div class="panel page-title"><div><h2>My Smart Campaigns</h2><p class="muted">Create P1/P2 links and set worker payout.</p></div><button type="button" class="btn" onclick="openSmartBuilder('${pre?.id||''}')">＋ Create New</button></div>${pre?`<div class="selected-offer-mini"><img src="${safe(pre.image||'')}"><div><b>${safe(pre.title||'Campaign')}</b><small>Max ₹${money(totalMax(pre))}</small></div><span class="tag green">Selected</span></div>`:''}<div class="smart-list">${list.map(smartCard).join('')||`<div class="empty">No smart campaign yet.</div>`}</div>`);
+  shell('smart',`<div class="panel page-title"><div><h2>My Smart Campaigns</h2><p class="muted">Create and manage campaign links.</p></div><button type="button" class="btn" onclick="openSmartBuilder('${pre?.id||''}')">＋ Create New</button></div>${pre?`<div class="selected-offer-mini"><img src="${safe(pre.image||'')}"><div><b>${safe(pre.title||'Campaign')}</b><small>Max ₹${money(totalMax(pre))}</small></div><span class="tag green">Selected</span></div>`:''}<div class="smart-list" id="smartList">${list.map(smartCard).join('')||`<div class="empty">No smart campaign yet.</div>`}</div>`);
 }
-function offerSelectHtml(current=''){return `<label class="mini">Select Offer</label><select id="smartOffer" class="field" onchange="smartOfferChanged()">${current?'':`<option value="">-- Choose Offer --</option>`}${activeCampaigns().map(c=>`<option value="${c.id}" ${c.id===current?'selected':''}>${safe(c.title||'Campaign')}</option>`).join('')}</select>`}
-function smartGoalHtml(c,l=null){const goals=(l?.goals?.length?l.goals:getGoals(c)); return `<label class="mini">Campaign Title</label><input id="smartTitle" class="field" value="${safe(l?.campaignTitle||c.title||'')}"><div class="goal-panel smart-compact"><div class="toolbar"><b>Payout Calculator</b><label class="ref-toggle"><input type="checkbox" id="smartP2" ${l?.enableP2?'checked':''}> P2</label></div>${goals.map((g,i)=>`<div class="goalbox"><h3>${safe(g.name)} <span class="tag">Max ₹${money(g.maxPayout)}</span></h3><label class="mini">Worker Payout</label><input class="field smartSplit" data-max="${Number(g.maxPayout||0)}" data-name="${safe(g.name)}" value="${Number(g.userReward||0)}" type="number" min="0" max="${Number(g.maxPayout||0)}" oninput="calcProfit(this)"><div class="profitline">Profit ₹<span>${money(Math.max(0,Number(g.maxPayout||0)-Number(g.userReward||0)))}</span></div></div>`).join('')}</div><label class="mini">Worker Steps</label><textarea id="smartSteps" class="field" rows="3">${safe(l?.steps||c.instructions||c.steps||'')}</textarea><button type="button" class="btn full" onclick="saveSmartLive(document.getElementById('smartOffer')?.value||'${c.id}','${l?.id||''}')">${l?'Save Changes':'Create Campaign'}</button>`}
+function activeCampaigns(){return campaigns.filter(x=>String(x.status||'active')!=='paused')}
+function slugify(v){return String(v||'offer').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,50)||'offer'}
+function offerSelectHtml(current=''){
+  const locked=!!current;
+  if(locked){ const c=campaigns.find(x=>x.id===current)||{}; return `<input id="smartOffer" type="hidden" value="${current}"><label class="mini">Selected Offer</label><div class="selected-offer-mini compact"><img src="${safe(c.image||'')}"><div><b>${safe(c.title||'Campaign')}</b><small>Max ₹${money(totalMax(c))}</small></div></div>`; }
+  return `<label class="mini">Select Offer</label><select id="smartOffer" class="field" onchange="smartOfferChanged()"><option value="">-- Choose Offer --</option>${activeCampaigns().map(c=>`<option value="${c.id}">${safe(c.title||'Campaign')}</option>`).join('')}</select>`
+}
+function smartGoalHtml(c,l=null){
+  const goals=(l?.goals?.length?l.goals:getGoals(c));
+  return `<label class="mini">Campaign Title</label><input id="smartTitle" class="field" value="${safe(l?.campaignTitle||c.title||'')}"><label class="mini">Custom Slug</label><input id="smartSlug" class="field" value="${safe(l?.slug||'')}" placeholder="${safe(slugify(c.title))}"><div class="goal-panel smart-compact"><div class="toolbar"><b>Payout Calculator</b><label class="ref-toggle"><input type="checkbox" id="smartP2" ${l?.enableP2?'checked':''}> P2</label></div>${goals.map((g,i)=>`<div class="goalbox"><h3>${safe(g.name)} <span class="tag">Max ₹${money(g.maxPayout)}</span></h3><label class="mini">Worker Payout</label><input class="field smartSplit" data-max="${Number(g.maxPayout||0)}" data-name="${safe(g.name)}" value="${Number(g.userReward||0)}" type="number" min="0" max="${Number(g.maxPayout||0)}" oninput="calcProfit(this)"><div class="profitline">Profit ₹<span>${money(Math.max(0,Number(g.maxPayout||0)-Number(g.userReward||0)))}</span></div></div>`).join('')}</div><label class="mini">Worker Steps</label><textarea id="smartSteps" class="field" rows="3">${safe(l?.steps||c.instructions||c.steps||'Complete task carefully.')}</textarea><button type="button" class="btn full" id="saveSmartBtn" onclick="saveSmartLive('${l?.id||''}')">${l?'Save Changes':'Create Campaign'}</button>`
+}
 window.smartOfferChanged=()=>{const c=campaigns.find(x=>x.id===document.getElementById('smartOffer')?.value); document.getElementById('smartBuilderBody').innerHTML=c?smartGoalHtml(c):'<div class="empty small">Select an offer to continue.</div>';};
 window.openSmartBuilder=(campaignId='', smartId='')=>{
   const l=smartLinks.find(x=>x.id===smartId)||null;
   const c=campaigns.find(x=>x.id===(campaignId||l?.campaignId));
   modal(`<h2>${l?'Edit':'New'} Campaign</h2>${offerSelectHtml(c?.id||'')}<div id="smartBuilderBody">${c?smartGoalHtml(c,l):'<div class="empty small">Select an offer to continue.</div>'}</div>`)
 };
-window.calcProfit=(el)=>{let max=Number(el.dataset.max||0), val=Math.min(max,Number(el.value||0)); if(Number(el.value)>max){el.value=max;val=max} el.closest('.goalbox').querySelector('.profitline span').textContent=money(Math.max(0,max-val));};
-window.saveSmartLive=async(campaignId, smartId='')=>{const c=campaigns.find(x=>x.id===campaignId)||{}; const gs=[...document.querySelectorAll('.smartSplit')].map((el,i)=>({id:'g'+i,name:el.dataset.name,maxPayout:Number(el.dataset.max||0),userReward:Number(el.value||0),affiliateProfit:Math.max(0,Number(el.dataset.max||0)-Number(el.value||0))})); const payload={campaignId,campaignTitle:document.getElementById('smartTitle')?.value||c.title||'',publisherId:user.uid,slug:((document.getElementById('smartTitle')?.value)||c.title||'offer').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Date.now().toString().slice(-4),goals:gs,enableP2:document.getElementById('smartP2')?.checked||false,steps:document.getElementById('smartSteps')?.value||'',updatedAt:Date.now()}; if(smartId){await updateDoc(doc(db,'smart_links',smartId),payload)}else{payload.createdAt=Date.now(); await addDoc(collection(db,'smart_links'),payload)} closeModal(); await loadData(); renderSmartLinksPage(); toast(smartId?'Updated':'Created')};
-window.deleteSmartLive=async(id)=>{if(!confirm('Delete this smart campaign?'))return; await deleteDoc(doc(db,'smart_links',id)); smartLinks=smartLinks.filter(x=>x.id!==id); document.getElementById('smart_'+id)?.remove(); if(!smartLinks.length) renderSmartLinksPage(); toast('Deleted')};
-
-function compactDate(t){const d=new Date(t||Date.now());return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' • '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}
+window.calcProfit=(el)=>{let max=Number(el.dataset.max||0), val=Math.min(max,Math.max(0,Number(el.value||0))); if(Number(el.value)>max){el.value=max;val=max} if(Number(el.value)<0){el.value=0;val=0} el.closest('.goalbox').querySelector('.profitline span').textContent=money(Math.max(0,max-val))};
+window.saveSmartLive=async(smartId='')=>{
+  try{
+    if(!user?.uid){toast('Please login again');return}
+    const btn=document.getElementById('saveSmartBtn'); if(btn){btn.disabled=true;btn.textContent='Saving...'}
+    const campaignId=document.getElementById('smartOffer')?.value;
+    if(!campaignId){toast('Select offer'); if(btn){btn.disabled=false;btn.textContent=smartId?'Save Changes':'Create Campaign'} return}
+    const c=campaigns.find(x=>x.id===campaignId)||{};
+    const gs=[...document.querySelectorAll('.smartSplit')].map((el,i)=>({id:'g'+i,name:el.dataset.name,maxPayout:Number(el.dataset.max||0),userReward:Number(el.value||0),affiliateProfit:Math.max(0,Number(el.dataset.max||0)-Number(el.value||0))}));
+    const title=document.getElementById('smartTitle')?.value||c.title||'Campaign';
+    const rawSlug=document.getElementById('smartSlug')?.value||slugify(title)+'-'+Date.now().toString().slice(-4);
+    const payload={campaignId,campaignTitle:title,offerName:c.title||title,publisherId:user.uid,userId:user.uid,slug:slugify(rawSlug),goals:gs,enableP2:document.getElementById('smartP2')?.checked||false,steps:document.getElementById('smartSteps')?.value||'',updatedAt:Date.now()};
+    if(smartId){await updateDoc(doc(db,'smart_links',smartId),payload)}else{payload.createdAt=Date.now(); const refDoc=await addDoc(collection(db,'smart_links'),payload); payload.id=refDoc.id; smartLinks.unshift(payload)}
+    closeModal();
+    await loadData();
+    renderSmartLinksPage();
+    toast(smartId?'Updated':'Smart campaign created');
+  }catch(e){console.error(e); toast(e?.message||'Campaign not created');}
+};
+window.deleteSmartLive=async(id)=>{try{if(!confirm('Delete this smart campaign?'))return; await deleteDoc(doc(db,'smart_links',id)); smartLinks=smartLinks.filter(x=>x.id!==id); document.getElementById('smart_'+id)?.remove(); if(!document.querySelector('.smart-card')) renderSmartLinksPage(); toast('Deleted')}catch(e){console.error(e);toast(e?.message||'Delete failed')}};
 function renderWalletPage(){
   if(!requireLogin())return;
   const history=[...withdraws.map(w=>({...w,kind:'Payout'})),...submissions.filter(s=>s.status==='approved').map(s=>({...s,kind:'Task',amount:s.reward||s.payout||0,name:s.campaignTitle||s.offerName||s.campaignId,status:'credit'}))].sort((a,b)=>(b.time||b.createdAt||0)-(a.time||a.createdAt||0));
